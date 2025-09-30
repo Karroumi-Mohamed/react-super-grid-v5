@@ -396,8 +396,8 @@ export class TableCore {
         this.cellCommandRegistry.dispatch(keyboardCommand);
     }
 
-    private convertMouseEventToCommand(cellId: CellId, eventName: string, event: MouseEvent, spaceId?: SpaceId): void {
-        // Log space information
+    private convertMouseEventToCommand(cellId: CellId, eventName: string, event: MouseEvent, _spaceId?: SpaceId): void {
+        // Log space information (commented out for production)
         /* if (spaceId && (eventName === 'mouseenter' || eventName === 'mouseleave')) {
             const space = this.spaceRegistry.get(spaceId);
             const spaceName = space?.name || 'Unknown Space';
