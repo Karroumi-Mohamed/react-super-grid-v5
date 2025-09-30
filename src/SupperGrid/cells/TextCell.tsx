@@ -63,8 +63,8 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                     break;
 
                 case 'keydown':
-
-                    runAction("saveAction");
+                    // Future: runAction("saveAction") - Action system not yet implemented
+                    // For now, keyboard events are handled by plugins (e.g., FocusPlugin)
                     break;
                 default:
                     // Ignore unknown commands
