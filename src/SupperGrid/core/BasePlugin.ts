@@ -1,4 +1,5 @@
 import type { CellCommand, RowCommand, CellId, RowId, SpaceId, Cell, Space } from './types';
+import type { APIUsage } from './ActionRegistry';
 
 // Spatial comparison result types
 export type VerticalComparison = {
@@ -21,6 +22,8 @@ export interface TablePluginAPIs {
     createRowInTableSpace(rowData: any, position?: 'top' | 'bottom'): void;
     getCell(cellId: CellId): Cell | undefined;
     getRow(rowId: RowId): import('./types').Row<any> | undefined;
+    getCellRegistry(): import('./Registries').CellRegistry;
+    getRowRegistry(): import('./Registries').RowRegistry<any>;
     compareVertical(cellId1: CellId, cellId2: CellId): VerticalComparison;
     compareHorizontal(cellId1: CellId, cellId2: CellId): HorizontalComparison;
     deleteRow(rowId: RowId): void;
@@ -32,6 +35,8 @@ export interface TablePluginAPIs {
     renderSpace(spaceId: SpaceId): void;
     renderTableSpace(): void;
     scrollToCell(cellId: CellId): void;
+    runAction(cellId: CellId, actionName: string, payload?: any): void;
+    getKeyboardOwner(): CellId | null;
 }
 
 export interface RowPluginAPIs {
@@ -71,6 +76,9 @@ export abstract class BasePlugin {
     abstract onBeforeRowCommand<K extends keyof import('./types').RowCommandMap>(
         command: RowCommand<K>
     ): boolean | void;
+
+    // Action interception - return false to stop plugin chain (APIs still execute)
+    onBeforeAction?(cellId: CellId, actionName: string, apiUsage: APIUsage): boolean | void;
 
     // Dependency management
     getPlugin<T extends BasePlugin>(pluginName: string): T | null {

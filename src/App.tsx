@@ -6,13 +6,19 @@ import { FocusPlugin } from './SupperGrid/plugins/FocusPlugin'
 import './App.css'
 import { SelectPlugin } from './SupperGrid/plugins/SelectionPlugin';
 import { PerformancePlugin } from './SupperGrid/plugins/PerformancePlugin';
+import { EditPlugin } from './SupperGrid/plugins/EditPlugin';
+import { SavePropagationPlugin } from './SupperGrid/plugins/SavePropagationPlugin';
+import { SaveBlockerPlugin } from './SupperGrid/plugins/SaveBlockerPlugin';
 
 function App() {
   const gridRef = useRef<SuperGridRef>(null);
   
   // Create plugin instances
   const focusPlugin = new FocusPlugin();
+  const editPlugin = new EditPlugin();
   const selectPlugin = new SelectPlugin();
+  const savePropagationPlugin = new SavePropagationPlugin();
+  const saveBlockerPlugin = new SaveBlockerPlugin();
   const performancePlugin = new PerformancePlugin();
 
   // Sample data
@@ -75,7 +81,7 @@ function App() {
         ref={gridRef}
         data={data}
         config={config}
-        plugins={[focusPlugin, selectPlugin, performancePlugin]}
+        plugins={[focusPlugin, editPlugin, selectPlugin, savePropagationPlugin, /* saveBlockerPlugin, */ performancePlugin]}
       />
     </div>
   )

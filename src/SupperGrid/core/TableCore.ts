@@ -8,9 +8,12 @@ import type {
     CellCommandHandeler,
     RowCommandMap,
     TableRowAPI,
+    CellTableAPIs,
+    ActionMap,
 } from './types';
 import type { TablePluginAPIs, RowPluginAPIs, RowTableAPIs, VerticalComparison } from './BasePlugin';
 import { CellCommandRegistry, RowCommandRegistry, SpaceCommandRegistry } from './CommandRegistry';
+import { ActionRegistry } from './ActionRegistry';
 import { PluginManager } from './PluginManager';
 import type { BasePlugin } from './BasePlugin';
 import { CellRegistry, RowRegistry, SpaceRegistry } from './Registries';
@@ -25,6 +28,7 @@ export class TableCore {
     private cellCommandRegistry: CellCommandRegistry;
     private rowCommandRegistry: RowCommandRegistry;
     private spaceCommandRegistry: SpaceCommandRegistry;
+    private actionRegistry: ActionRegistry;
     private pluginManager: PluginManager;
     private cellRegistry: CellRegistry;
     private rowRegistry: RowRegistry<any>;
@@ -33,17 +37,22 @@ export class TableCore {
     private spaceCoordinator: SpaceCoordinator;
     private pluginsInitialized = false;
     private pluginSpaceIds: Map<string, SpaceId> = new Map(); // Track plugin space IDs
+    private keyboardOwnerRef: React.MutableRefObject<CellId | null> | null = null;
 
     constructor() {
         this.cellCommandRegistry = new CellCommandRegistry();
         this.rowCommandRegistry = new RowCommandRegistry();
         this.spaceCommandRegistry = new SpaceCommandRegistry();
+        this.actionRegistry = new ActionRegistry();
         this.pluginManager = new PluginManager();
         this.cellRegistry = new CellRegistry();
         this.rowRegistry = new RowRegistry();
         this.spaceRegistry = new SpaceRegistry();
         this.cellCoordinator = new CellCoordinator(this.cellRegistry, this.rowRegistry);
         this.spaceCoordinator = new SpaceCoordinator(this.spaceRegistry);
+
+        // Set up action registry with real API factory
+        this.actionRegistry.setRealAPIsFactory((cellId: CellId) => this.createRealCellTableAPIs(cellId));
     }
 
     // Factory for plugin-specific APIs with bound context
@@ -133,6 +142,14 @@ export class TableCore {
             getRow: (rowId: RowId) => {
                 // Access row object with cells array and spatial data
                 return this.rowRegistry.get(rowId);
+            },
+
+            getCellRegistry: () => {
+                return this.cellRegistry;
+            },
+
+            getRowRegistry: () => {
+                return this.rowRegistry;
             },
 
             compareVertical: (cellId1: CellId, cellId2: CellId): VerticalComparison => {
@@ -242,6 +259,15 @@ export class TableCore {
                 } else {
                     console.warn(`scrollToCell: Could not find DOM element for cell ${cellId}`);
                 }
+            },
+
+            runAction: (cellId: CellId, actionName: string, payload?: any) => {
+                // Context automatically injected via closure
+                this.actionRegistry.execute(cellId, actionName, payload, pluginName);
+            },
+
+            getKeyboardOwner: () => {
+                return this.getKeyboardOwner();
             }
         };
     }
@@ -297,6 +323,97 @@ export class TableCore {
             },
             getCell: (id: CellId) => {
                 return this.cellRegistry.get(id);
+            },
+            getCellActionAPIs: (cellId: CellId) => {
+                return this.createCellActionAPIs(cellId);
+            }
+        };
+    }
+
+    // Factory for cell-specific action APIs with bound context
+    createCellActionAPIs(cellId: CellId) {
+        return {
+            registerActions: (actionMap: ActionMap) => {
+                // cellId captured in closure
+                this.actionRegistry.register(cellId, actionMap);
+            },
+            runAction: (actionName: string, payload?: any) => {
+                // cellId captured in closure, no originPlugin (triggered by cell)
+                this.actionRegistry.execute(cellId, actionName, payload);
+            }
+        };
+    }
+
+    // Create real CellTableAPIs implementation
+    private createRealCellTableAPIs(cellId: CellId): CellTableAPIs {
+        return {
+            save: (value: any) => {
+                // Dispatch updateValue command - plugins can intercept/validate
+                this.dispatchCellCommand({
+                    name: 'updateValue',
+                    targetId: cellId,
+                    payload: { value },
+                    timestamp: Date.now()
+                });
+            },
+
+            deleteRow: () => {
+                const cell = this.cellRegistry.get(cellId);
+                if (cell) {
+                    this.destroyRow(cell.rowId);
+                }
+            },
+
+            navigate: (direction: 'up' | 'down' | 'left' | 'right') => {
+                const cell = this.cellRegistry.get(cellId);
+                if (!cell) return;
+
+                let targetCellId: CellId | null = null;
+                switch (direction) {
+                    case 'up':
+                        targetCellId = cell.top;
+                        break;
+                    case 'down':
+                        targetCellId = cell.bottom;
+                        break;
+                    case 'left':
+                        targetCellId = cell.left;
+                        break;
+                    case 'right':
+                        targetCellId = cell.right;
+                        break;
+                }
+
+                if (targetCellId) {
+                    this.focusCell(targetCellId);
+                }
+            },
+
+            releaseKeyboard: () => {
+                // Release keyboard ownership
+                if (this.keyboardOwnerRef) {
+                    this.keyboardOwnerRef.current = null;
+                }
+            },
+
+            requestKeyboard: () => {
+                // Claim keyboard ownership
+                if (this.keyboardOwnerRef) {
+                    this.keyboardOwnerRef.current = cellId;
+                }
+            },
+
+            validate: (): boolean => {
+                // Placeholder - could trigger validation command
+                return true;
+            },
+
+            blur: () => {
+                this.blurCell(cellId);
+            },
+
+            focus: () => {
+                this.focusCell(cellId);
             }
         };
     }
@@ -335,6 +452,7 @@ export class TableCore {
         this.cellCommandRegistry.setPlugins(plugins);
         this.rowCommandRegistry.setPlugins(plugins);
         this.spaceCommandRegistry.setPlugins(plugins);
+        this.actionRegistry.setPlugins(plugins);
 
         // ONLY ONCE: Initialize plugins globally to prevent duplicate timers
         if (!globalPluginInitialized) {
@@ -368,6 +486,11 @@ export class TableCore {
 
     // Dispatch keyboard commands without targetId (plugin-only)
     dispatchKeyboardCommand(eventName: string, event: KeyboardEvent): void {
+        // Check keyboard ownership FIRST - if keyboard is borrowed, don't create command
+        if (this.getKeyboardOwner() !== null) {
+            return; // Keyboard is owned by a cell - allow default browser behavior
+        }
+
         let keyboardCommand: CellCommand;
 
         switch (eventName) {
@@ -396,7 +519,7 @@ export class TableCore {
         this.cellCommandRegistry.dispatch(keyboardCommand);
     }
 
-    private convertMouseEventToCommand(cellId: CellId, eventName: string, event: MouseEvent, spaceId?: SpaceId): void {
+    private convertMouseEventToCommand(cellId: CellId, eventName: string, event: MouseEvent, _spaceId?: SpaceId): void {
         // Log space information
         /* if (spaceId && (eventName === 'mouseenter' || eventName === 'mouseleave')) {
             const space = this.spaceRegistry.get(spaceId);
@@ -559,6 +682,16 @@ export class TableCore {
     // Store plugin space ID for later reference
     setPluginSpaceId(pluginName: string, spaceId: SpaceId): void {
         this.pluginSpaceIds.set(pluginName, spaceId);
+    }
+
+    // Set keyboard owner ref from SuperGrid
+    setKeyboardOwnerRef(ref: React.MutableRefObject<CellId | null>): void {
+        this.keyboardOwnerRef = ref;
+    }
+
+    // Get current keyboard owner (for plugins to check)
+    getKeyboardOwner(): CellId | null {
+        return this.keyboardOwnerRef?.current ?? null;
     }
 
     // Row destruction with automatic cell cleanup

@@ -25,7 +25,7 @@ export class PerformancePlugin extends BasePlugin {
             const startTime = performance.now();
 
 
-            const rowCount = 5000;
+            const rowCount = 100;
             const batchSize = 100; // Process in batches to avoid blocking UI
 
             this.createRowsBatch(0, rowCount, batchSize, startTime);

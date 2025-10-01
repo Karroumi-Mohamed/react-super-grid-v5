@@ -23,6 +23,7 @@ export interface SuperGridRef {
 
 export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function SuperGrid<TData>({ data, config, plugins = [] }: SuperGridProps<TData>, ref: React.Ref<SuperGridRef>) {
     const tableCoreRef = useRef<TableCore | null>(null);
+    const keyboardOwnerRef = useRef<CellId | null>(null);
     const [tableCoreReady, setTableCoreReady] = useState(false);
     const [allSpacesCreated, setAllSpacesCreated] = useState(false);
     const [allCellsRegistered, setAllCellsRegistered] = useState(false);
@@ -62,6 +63,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
 
         if (!tableCoreRef.current) {
             tableCoreRef.current = new TableCore();
+            tableCoreRef.current.setKeyboardOwnerRef(keyboardOwnerRef);
         }
 
         // Add all plugins first (don't initialize yet)
@@ -365,12 +367,17 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
                 // Create cell-specific registerCommands function
                 const cellRegisterCommands = createCellRegisterFunction(cellId);
 
+                // Get action APIs for this cell
+                const actionAPIs = tableApis.getCellActionAPIs(cellId);
+
                 // Create cell props with the cell-aware registerCommands function
                 const cellProps = {
                     id: cellId,
                     value: cellValue,
                     config: column, // This should have the proper cell config
-                    registerCommands: cellRegisterCommands
+                    registerCommands: cellRegisterCommands,
+                    registerActions: actionAPIs.registerActions,
+                    runAction: actionAPIs.runAction
                 };
 
                 // Render the actual cell component wrapped in event-capturing container

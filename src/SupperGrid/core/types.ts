@@ -125,6 +125,21 @@ type SpaceCommand<K extends keyof SpaceCommandMap = keyof SpaceCommandMap> = {
 
 export type { CellCommand, RowCommand, RowCommandMap, SpaceCommand, SpaceCommandMap, SpaceCommandHandler };
 
+// Cell Table APIs - for action system
+export interface CellTableAPIs {
+    save(value: any): void;
+    deleteRow(): void;
+    navigate(direction: 'up' | 'down' | 'left' | 'right'): void;
+    releaseKeyboard(): void;
+    requestKeyboard(): void;
+    validate(): boolean;
+    blur(): void;
+    focus(): void;
+}
+
+// Action types
+export type ActionHandler = (tableAPIs: CellTableAPIs, payload?: any) => void;
+export type ActionMap = Record<string, ActionHandler>;
 
 type CellCommandHandeler = (command: CellCommand) => void;
 type RowCommandHandler = (command: RowCommand<any>) => void;
@@ -140,6 +155,7 @@ interface TableRowAPI {
     unregisterRowHandler: () => void;
     getRow: (rowId: RowId) => Row<any> | undefined;
     getCell: (cellId: CellId) => Cell | undefined;
+    getCellActionAPIs: (cellId: CellId) => { registerActions: (actionMap: ActionMap) => void; runAction: (actionName: string, payload?: any) => void };
 }
 
 export type { CellCommandHandeler, RowCommandHandler, TableRowAPI };
@@ -163,7 +179,8 @@ type CellProps<T, C extends BaseCellConfig> = {
     value: T | null; // Force cells to handle null values
     config: C;
     registerCommands: (handler: CellCommandHandeler) => void;
-    // registerCommands, registerActions, executeAction for later
+    registerActions: (actionMap: ActionMap) => void;
+    runAction: (actionName: string, payload?: any) => void;
 };
 
 type CellComponent<T, C extends BaseCellConfig> = React.FC<CellProps<T, C>>;

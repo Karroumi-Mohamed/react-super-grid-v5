@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CellComponent, BaseCellConfig, CellCommand } from '../core/types';
+import type { CellComponent, BaseCellConfig, CellCommand, CellTableAPIs } from '../core/types';
 import { cn } from '../core/utils';
 
 interface TextCellConfig extends BaseCellConfig {
@@ -12,7 +12,9 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     id,
     value,
     config,
-    registerCommands
+    registerCommands,
+    registerActions,
+    runAction
 }) => {
     // Initialize state only once, ignore future prop changes
     // Handle null values explicitly
@@ -21,6 +23,7 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     const [isSelected, setIsSelected] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [originalValue, setOriginalValue] = useState<string>(''); // Track value before editing
 
     // Register command handler when component mounts
     useEffect(() => {
@@ -44,7 +47,11 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
 
                 case 'edit':
                     if (!config.readOnly) {
+                        // Save current value before entering edit mode
+                        setOriginalValue(internalValue);
                         setIsEditing(true);
+                        // Request keyboard ownership when entering edit mode
+                        runAction('requestKeyboardAction');
                     }
                     break;
 
@@ -62,16 +69,39 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                     setError(command.payload?.error || 'An error occurred');
                     break;
 
-                case 'keydown':
-
-                    runAction("saveAction");
-                    break;
                 default:
                     // Ignore unknown commands
                     break;
             }
         });
     }, [registerCommands, config.readOnly]);
+
+    // Register actions when component mounts
+    useEffect(() => {
+        registerActions({
+            // Request keyboard - claim keyboard ownership for editing
+            requestKeyboardAction: (api: CellTableAPIs) => {
+                api.requestKeyboard();
+            },
+
+            // Save action - save value and release keyboard
+            saveAction: (api: CellTableAPIs, newValue: string) => {
+                api.save(newValue);
+                api.releaseKeyboard();
+            },
+
+            // Exit action - just release keyboard without saving
+            exitAction: (api: CellTableAPIs) => {
+                api.releaseKeyboard();
+            },
+
+            // Navigate action - save then move in direction
+            navigateAction: (api: CellTableAPIs, direction: 'up' | 'down' | 'left' | 'right') => {
+                api.save(internalValue);
+                api.navigate(direction);
+            }
+        });
+    }, [registerActions, internalValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
@@ -88,11 +118,19 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
+            // Use action system to save and exit
+            runAction('saveAction', internalValue);
             setIsEditing(false);
+            // Stop event from bubbling to document listener
+            e.stopPropagation();
         } else if (e.key === 'Escape') {
-            // Reset to current internal value (no props dependency)
-            // Could reset to last saved value if we track that
+            // Revert to original value
+            setInternalValue(originalValue);
+            // Use action system to exit without saving
+            runAction('exitAction');
             setIsEditing(false);
+            // Stop event from bubbling to document listener
+            e.stopPropagation();
         }
     };
 
@@ -100,7 +138,7 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     return (
         <div
             className={cn(
-                'p-2 transition-colors',
+                'p-2 transition-colors min-h-[40px] flex items-center',
                 config.readOnly && 'bg-gray-100 cursor-not-allowed',
                 isSelected && isFocused
                     ? 'bg-blue-100 ring-blue-400 ring-[0.5px]' // hybrid state
@@ -123,17 +161,17 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                     placeholder={config.placeholder}
                     maxLength={config.maxLength}
                     autoFocus
-                    className="text-cell-input"
+                    className="w-full h-full bg-transparent border-none outline-none p-0 m-0"
                 />
             ) : (
-                <span className="text-cell-display">
+                <span className="block truncate">
                     {internalValue || config.placeholder}
                 </span>
             )}
             {error && (
-                <div className="text-cell-error">
-                    {error}
-                </div>
+                <span className="ml-2 text-red-500 text-xs">
+                    ⚠
+                </span>
             )}
         </div>
     );

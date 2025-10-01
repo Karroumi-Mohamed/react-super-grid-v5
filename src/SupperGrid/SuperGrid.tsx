@@ -300,12 +300,17 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString }: RowP
                 // Create cell-specific registerCommands function
                 const cellRegisterCommands = createCellRegisterFunction(cellId);
 
+                // Get action APIs for this cell
+                const actionAPIs = tableApis.getCellActionAPIs(cellId);
+
                 // Create cell props with the cell-aware registerCommands function
                 const cellProps = {
                     id: cellId,
                     value: cellValue,
                     config: column, // This should have the proper cell config
-                    registerCommands: cellRegisterCommands
+                    registerCommands: cellRegisterCommands,
+                    registerActions: actionAPIs.registerActions,
+                    runAction: actionAPIs.runAction
                 };
 
                 // Render the actual cell component wrapped in event-capturing container
