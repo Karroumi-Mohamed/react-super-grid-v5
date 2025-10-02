@@ -7,18 +7,22 @@ import './App.css'
 import { SelectPlugin } from './SupperGrid/plugins/SelectionPlugin';
 import { PerformancePlugin } from './SupperGrid/plugins/PerformancePlugin';
 import { EditPlugin } from './SupperGrid/plugins/EditPlugin';
-import { SavePropagationPlugin } from './SupperGrid/plugins/SavePropagationPlugin';
-import { SaveBlockerPlugin } from './SupperGrid/plugins/SaveBlockerPlugin';
+// import { SavePropagationPlugin } from './SupperGrid/plugins/SavePropagationPlugin';
+// import { SaveBlockerPlugin } from './SupperGrid/plugins/SaveBlockerPlugin';
+import { DraftPlugin } from './SupperGrid/plugins/DraftPlugin';
+import { MultiEditPlugin } from './SupperGrid/plugins/MultiEditPlugin';
 
 function App() {
   const gridRef = useRef<SuperGridRef>(null);
-  
+
   // Create plugin instances
   const focusPlugin = new FocusPlugin();
   const editPlugin = new EditPlugin();
   const selectPlugin = new SelectPlugin();
-  const savePropagationPlugin = new SavePropagationPlugin();
-  const saveBlockerPlugin = new SaveBlockerPlugin();
+  const multiEditPlugin = new MultiEditPlugin();
+  const draftPlugin = new DraftPlugin();
+  // const savePropagationPlugin = new SavePropagationPlugin();
+  // const saveBlockerPlugin = new SaveBlockerPlugin();
   const performancePlugin = new PerformancePlugin();
 
   // Sample data
@@ -34,21 +38,18 @@ function App() {
       key: 'name' as keyof typeof data[0],
       cell: TextCell,
       header: 'Name',
-      placeholder: 'Enter name',
       width: '200px'
     },
     {
       key: 'age' as keyof typeof data[0],
       cell: TextCell,
       header: 'Age',
-      placeholder: 'Enter age',
       width: '100px'
     },
     {
       key: 'email' as keyof typeof data[0],
       cell: TextCell,
       header: 'Email',
-      placeholder: 'Enter email',
       width: '250px'
     }
   ];
@@ -67,9 +68,9 @@ function App() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">SuperGrid Test</h1>
-      
+
       <div className="mb-4">
-        <button 
+        <button
           onClick={deleteFirstRow}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
@@ -81,7 +82,7 @@ function App() {
         ref={gridRef}
         data={data}
         config={config}
-        plugins={[focusPlugin, editPlugin, selectPlugin, savePropagationPlugin, /* saveBlockerPlugin, */ performancePlugin]}
+        plugins={[focusPlugin, editPlugin, selectPlugin, multiEditPlugin, draftPlugin, performancePlugin]}
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import type { CellCommand, RowCommand, CellId, RowId, SpaceId, Cell, Space } from './types';
+import type { CellCommand, RowCommand, CellId, RowId, SpaceId, Cell, Space, ButtonId, ButtonVariant, ButtonPosition } from './types';
 import type { APIUsage } from './ActionRegistry';
 
 // Spatial comparison result types
@@ -37,6 +37,8 @@ export interface TablePluginAPIs {
     scrollToCell(cellId: CellId): void;
     runAction(cellId: CellId, actionName: string, payload?: any): void;
     getKeyboardOwner(): CellId | null;
+    addButton(label: string, callback: () => void, position?: ButtonPosition, variant?: ButtonVariant): ButtonId;
+    removeButton(buttonId: ButtonId): boolean;
 }
 
 export interface RowPluginAPIs {

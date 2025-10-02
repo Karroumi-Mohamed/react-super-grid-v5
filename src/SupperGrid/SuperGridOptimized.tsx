@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX, useReducer } from 'react';
 import type { TableProps, RowProps, RowId, CellId, CellCommand, Cell, CellCommandHandeler, RowCommandHandler, SpaceId } from './core/types';
 import { TableCore } from './core/TableCore';
 import type { BasePlugin } from './core/BasePlugin';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from './core/utils';
 import { SpaceOptimized } from './components/SpaceOptimized';
+import { Toolbar } from './components/Toolbar';
 
 interface SuperGridProps<TData> extends TableProps<TData> {
     plugins?: BasePlugin[];
@@ -30,6 +31,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
     const [pluginsInitialized, setPluginsInitialized] = useState(false);
     const mountedRef = useRef(false);
     const cellRegistrationCallbackRef = useRef<(() => void) | null>(null);
+    const [, forceToolbarUpdate] = useReducer(x => x + 1, 0);
 
     // Expose TableCore methods through ref
     useImperativeHandle(ref, () => ({
@@ -64,6 +66,9 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
         if (!tableCoreRef.current) {
             tableCoreRef.current = new TableCore();
             tableCoreRef.current.setKeyboardOwnerRef(keyboardOwnerRef);
+            tableCoreRef.current.setToolbarChangeCallback(() => {
+                forceToolbarUpdate();
+            });
         }
 
         // Add all plugins first (don't initialize yet)
@@ -214,17 +219,6 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
                 }
             }
             if (pluginSpaceId) {
-
-                // Get space data for debugging
-                const spaceData = tableCoreRef.current!.getSpaceRegistry().get(pluginSpaceId);
-                const rowCount = spaceData?.rowIds.length || 0;
-
-                spaces.push(
-                    <div key={`debug-${pluginSpaceId}`} style={{ background: '#f0f0f0', padding: '4px', margin: '2px', fontSize: '12px' }}>
-                        {plugin.name} Space ({rowCount} rows)
-                    </div>
-                );
-
                 spaces.push(
                     <SpaceOptimized
                         key={pluginSpaceId}
@@ -257,6 +251,11 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
 
     return (
         <div className="w-fit">
+            {/* Toolbar */}
+            {tableCoreRef.current && (
+                <Toolbar buttons={tableCoreRef.current.getToolbarButtons()} />
+            )}
+
             {/* Header row */}
             <div className="flex">
                 {config.map((col, index) => (

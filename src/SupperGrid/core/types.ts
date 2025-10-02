@@ -1,6 +1,7 @@
 type SpaceId = string;
 type RowId = string;
 type CellId = string;
+type ButtonId = string;
 
 type Space = {
     name: string;
@@ -27,6 +28,17 @@ type Cell = {
     right: CellId | null;
 };
 
+type ButtonVariant = 'normal' | 'disabled' | 'standout';
+type ButtonPosition = 'left' | 'right';
+
+type ToolbarButton = {
+    id: ButtonId;
+    label: string;
+    callback: () => void;
+    position: ButtonPosition;
+    variant: ButtonVariant;
+};
+
 interface RegistryI<T_ID, T_Obj> {
     register(id: T_ID, obj: T_Obj): boolean; // true = new, false = overwritten
     unregister(id: T_ID): boolean; // true = existed and removed
@@ -50,12 +62,16 @@ export type {
     CellId,
     SpaceId,
     RowId,
+    ButtonId,
     Cell,
     Row,
     Space,
     RegistryI,
     CellCoordinate,
     CellCoordinatorI,
+    ButtonVariant,
+    ButtonPosition,
+    ToolbarButton,
 };
 
 // APIs and Commands

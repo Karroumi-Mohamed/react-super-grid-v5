@@ -164,8 +164,11 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                     className="w-full h-full bg-transparent border-none outline-none p-0 m-0"
                 />
             ) : (
-                <span className="block truncate">
-                    {internalValue || config.placeholder}
+                <span className={cn(
+                    "block truncate",
+                    !internalValue && !config.placeholder && "text-center"
+                )}>
+                    {internalValue || config.placeholder || '—'}
                 </span>
             )}
             {error && (

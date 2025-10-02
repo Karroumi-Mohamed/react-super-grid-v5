@@ -10,10 +10,14 @@ import type {
     TableRowAPI,
     CellTableAPIs,
     ActionMap,
+    ButtonId,
+    ButtonVariant,
+    ButtonPosition,
 } from './types';
 import type { TablePluginAPIs, RowPluginAPIs, RowTableAPIs, VerticalComparison } from './BasePlugin';
 import { CellCommandRegistry, RowCommandRegistry, SpaceCommandRegistry } from './CommandRegistry';
 import { ActionRegistry } from './ActionRegistry';
+import { ToolbarRegistry } from './ToolbarRegistry';
 import { PluginManager } from './PluginManager';
 import type { BasePlugin } from './BasePlugin';
 import { CellRegistry, RowRegistry, SpaceRegistry } from './Registries';
@@ -29,6 +33,7 @@ export class TableCore {
     private rowCommandRegistry: RowCommandRegistry;
     private spaceCommandRegistry: SpaceCommandRegistry;
     private actionRegistry: ActionRegistry;
+    private toolbarRegistry: ToolbarRegistry;
     private pluginManager: PluginManager;
     private cellRegistry: CellRegistry;
     private rowRegistry: RowRegistry<any>;
@@ -38,12 +43,14 @@ export class TableCore {
     private pluginsInitialized = false;
     private pluginSpaceIds: Map<string, SpaceId> = new Map(); // Track plugin space IDs
     private keyboardOwnerRef: React.MutableRefObject<CellId | null> | null = null;
+    private toolbarChangeCallback: (() => void) | null = null;
 
     constructor() {
         this.cellCommandRegistry = new CellCommandRegistry();
         this.rowCommandRegistry = new RowCommandRegistry();
         this.spaceCommandRegistry = new SpaceCommandRegistry();
         this.actionRegistry = new ActionRegistry();
+        this.toolbarRegistry = new ToolbarRegistry();
         this.pluginManager = new PluginManager();
         this.cellRegistry = new CellRegistry();
         this.rowRegistry = new RowRegistry();
@@ -268,6 +275,22 @@ export class TableCore {
 
             getKeyboardOwner: () => {
                 return this.getKeyboardOwner();
+            },
+
+            addButton: (label: string, callback: () => void, position: ButtonPosition = 'left', variant: ButtonVariant = 'normal') => {
+                const buttonId = this.toolbarRegistry.register(label, callback, position, variant);
+                // Notify toolbar to re-render
+                this.notifyToolbarChange();
+                return buttonId;
+            },
+
+            removeButton: (buttonId: ButtonId): boolean => {
+                const removed = this.toolbarRegistry.unregister(buttonId);
+                if (removed) {
+                    // Notify toolbar to re-render
+                    this.notifyToolbarChange();
+                }
+                return removed;
             }
         };
     }
@@ -692,6 +715,21 @@ export class TableCore {
     // Get current keyboard owner (for plugins to check)
     getKeyboardOwner(): CellId | null {
         return this.keyboardOwnerRef?.current ?? null;
+    }
+
+    // Toolbar management
+    setToolbarChangeCallback(callback: () => void): void {
+        this.toolbarChangeCallback = callback;
+    }
+
+    private notifyToolbarChange(): void {
+        if (this.toolbarChangeCallback) {
+            this.toolbarChangeCallback();
+        }
+    }
+
+    getToolbarButtons() {
+        return this.toolbarRegistry.getAllButtons();
     }
 
     // Row destruction with automatic cell cleanup

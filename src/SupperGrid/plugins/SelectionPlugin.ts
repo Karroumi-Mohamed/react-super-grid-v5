@@ -178,4 +178,9 @@ export class SelectPlugin extends BasePlugin {
         this.selectionSet.delete(id);
         this.tableAPIs?.createCellCommand(id, { name: 'unselect' });
     }
+
+    // Public API for other plugins
+    getSelected(): CellId[] {
+        return Array.from(this.selectionSet);
+    }
 }
