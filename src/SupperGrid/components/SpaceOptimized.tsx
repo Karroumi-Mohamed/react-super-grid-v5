@@ -68,7 +68,7 @@ export function SpaceOptimized<TData>({ spaceId, tableCore, config, initialData,
     }, [spaceId, tableCore]);
 
     // Handle addRow command with cross-space linking - optimized version
-    const handleAddRow = (rowData: any, position: 'top' | 'bottom', _command: SpaceCommand) => {
+    const handleAddRow = (rowData: any, position: 'top' | 'bottom', command: SpaceCommand) => {
         const newRowId = uuidv4();
         const rowRegistry = tableCore.getRowRegistry();
         const spaceRegistry = tableCore.getSpaceRegistry();
@@ -274,10 +274,12 @@ export function SpaceOptimized<TData>({ spaceId, tableCore, config, initialData,
         currentSpace.rowIds = updatedRowIds;
         spaceRegistry.register(spaceId, currentSpace);
 
-        // Schedule re-render after current render cycle completes using microtask
-        Promise.resolve().then(() => {
-            forceRender();
-        });
+        // Only re-render if render flag is true
+        if ('render' in command.payload && command.payload.render) {
+            Promise.resolve().then(() => {
+                forceRender();
+            });
+        }
     };
 
     // Find nearest space above or below that has rows - optimized

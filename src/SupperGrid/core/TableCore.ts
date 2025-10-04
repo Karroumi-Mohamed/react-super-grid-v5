@@ -89,7 +89,7 @@ export class TableCore {
                 this.rowCommandRegistry.dispatch(contextCommand);
             },
 
-            createRow: (rowData: any, position?: 'top' | 'bottom') => {
+            createRow: (rowData: any, position?: 'top' | 'bottom', render?: boolean) => {
 
                 // Smart detection: find space owned by this plugin
                 const allSpaceIds = this.spaceRegistry.list();
@@ -113,7 +113,8 @@ export class TableCore {
                     name: 'addRow',
                     payload: {
                         rowData,
-                        position: position || 'bottom' // Default to bottom if not specified
+                        position: position || 'top', // Default to top if not specified
+                        render: render || false // Default to false - no auto re-render
                     },
                     targetId: pluginSpaceId,
                     originPlugin: pluginName,
@@ -123,7 +124,7 @@ export class TableCore {
                 this.spaceCommandRegistry.dispatch(spaceCommand);
             },
 
-            createRowInTableSpace: (rowData: any, position?: 'top' | 'bottom') => {
+            createRowInTableSpace: (rowData: any, position?: 'top' | 'bottom', render?: boolean) => {
                 // Create row directly in table space
                 const tableSpaceId = 'table-space';
 
@@ -131,7 +132,8 @@ export class TableCore {
                     name: 'addRow',
                     payload: {
                         rowData,
-                        position: position || 'bottom' // Default to bottom if not specified
+                        position: position || 'top', // Default to top if not specified
+                        render: render || false // Default to false - no auto re-render
                     },
                     targetId: tableSpaceId,
                     originPlugin: pluginName,
@@ -349,6 +351,15 @@ export class TableCore {
             },
             getCellActionAPIs: (cellId: CellId) => {
                 return this.createCellActionAPIs(cellId);
+            },
+            updateRowData: (targetRowId: RowId, newData: any) => {
+                const row = this.rowRegistry.get(targetRowId);
+                if (row) {
+                    row.data = newData;
+                    this.rowRegistry.register(targetRowId, row);
+                } else {
+                    console.warn(`updateRowData: Row ${targetRowId} not found in registry`);
+                }
             }
         };
     }

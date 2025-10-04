@@ -303,6 +303,9 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString }: RowP
                 // Get action APIs for this cell
                 const actionAPIs = tableApis.getCellActionAPIs(cellId);
 
+                // Dummy hook for old SuperGrid.tsx (not used) - matches CellProps signature
+                const dummyHook = <V = any>(initialValue: V) => [initialValue, (() => {}) as (newValue: V) => void] as const;
+
                 // Create cell props with the cell-aware registerCommands function
                 const cellProps = {
                     id: cellId,
@@ -310,7 +313,8 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString }: RowP
                     config: column, // This should have the proper cell config
                     registerCommands: cellRegisterCommands,
                     registerActions: actionAPIs.registerActions,
-                    runAction: actionAPIs.runAction
+                    runAction: actionAPIs.runAction,
+                    useCellValue: dummyHook
                 };
 
                 // Render the actual cell component wrapped in event-capturing container

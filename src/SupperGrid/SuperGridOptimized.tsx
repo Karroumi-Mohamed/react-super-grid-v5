@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX, useReducer } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX, useReducer, useMemo } from 'react';
 import type { TableProps, RowProps, RowId, CellId, CellCommand, Cell, CellCommandHandeler, RowCommandHandler, SpaceId } from './core/types';
 import { TableCore } from './core/TableCore';
 import type { BasePlugin } from './core/BasePlugin';
@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { cn } from './core/utils';
 import { SpaceOptimized } from './components/SpaceOptimized';
 import { Toolbar } from './components/Toolbar';
+import { createCellValueHookBuilder } from './hooks/useCellValue';
 
 interface SuperGridProps<TData> extends TableProps<TData> {
     plugins?: BasePlugin[];
@@ -250,32 +251,38 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
     };
 
     return (
-        <div className="w-fit">
-            {/* Toolbar */}
+        <div className="w-full flex flex-col">
+            {/* Toolbar - Full width, no scroll */}
             {tableCoreRef.current && (
                 <Toolbar buttons={tableCoreRef.current.getToolbarButtons()} />
             )}
 
-            {/* Header row */}
-            <div className="flex">
-                {config.map((col, index) => (
-                    <div
-                        key={index}
-                        className={cn(
-                            'border-neutral-200 border-[0.5px] h-10 inset-0 box-border',
-                            'ring-[0.5px] ring-inset ring-transparent'
-                        )}
-                        style={{ width: `calc(${col.width} + 1px)` }}
-                    >
-                        <div className="h-full w-full flex justify-start items-center p-2 bg-stone-50 hover:bg-stone-100 hover:ring-stone-800 ring-transparent ring-[0.5px]">
-                            {col.header}
-                        </div>
+            {/* Scrollable grid container */}
+            <div className="overflow-x-auto grid-scrollbar">
+                {/* Grid content - can be wider than container */}
+                <div className="w-fit">
+                    {/* Header row */}
+                    <div className="flex">
+                        {config.map((col, index) => (
+                            <div
+                                key={index}
+                                className={cn(
+                                    'border-neutral-200 border-[0.5px] h-10 inset-0 box-border',
+                                    'ring-[0.5px] ring-inset ring-transparent'
+                                )}
+                                style={{ width: `calc(${col.width} + 1px)` }}
+                            >
+                                <div className="h-full w-full flex justify-start items-center p-2 bg-stone-50 hover:bg-stone-100 hover:ring-stone-800 ring-transparent ring-[0.5px]">
+                                    {col.header}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
-            {/* Spaces: Plugin spaces (top) + Table space (bottom) */}
-            <div className="w-full">
-                {renderSpaces()}
+                    {/* Spaces: Plugin spaces (top) + Table space (bottom) */}
+                    <div className="w-full">
+                        {renderSpaces()}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -337,6 +344,12 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
         };
     };
 
+    // Create hook builder for this row (once per row)
+    const hookBuilder = useMemo(() =>
+        createCellValueHookBuilder(id, tableApis),
+        [id, tableApis]
+    );
+
     // If row is destroyed, render nothing (React will unmount all child cells)
     if (isDestroyed) {
         return null;
@@ -369,6 +382,9 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
                 // Get action APIs for this cell
                 const actionAPIs = tableApis.getCellActionAPIs(cellId);
 
+                // Build context-aware hook for this specific cell
+                const cellValueHook = hookBuilder.buildHook(cellId, column.key as string);
+
                 // Create cell props with the cell-aware registerCommands function
                 const cellProps = {
                     id: cellId,
@@ -376,7 +392,8 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
                     config: column, // This should have the proper cell config
                     registerCommands: cellRegisterCommands,
                     registerActions: actionAPIs.registerActions,
-                    runAction: actionAPIs.runAction
+                    runAction: actionAPIs.runAction,
+                    useCellValue: cellValueHook
                 };
 
                 // Render the actual cell component wrapped in event-capturing container
@@ -385,7 +402,7 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
                     <div
                         key={cellId}
                         className={cn(
-                            'border-[0.5px] border-neutral-200 inset-0 box-border'
+                            'border-[0.5px] border-neutral-200 box-border'
                         )}
                         data-cell-id={cellId}
                         style={{ width: `calc(${column.width} + 1px)` }}

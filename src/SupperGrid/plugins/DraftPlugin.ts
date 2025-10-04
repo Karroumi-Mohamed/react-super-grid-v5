@@ -21,6 +21,7 @@ export class DraftPlugin extends BasePlugin {
     private draftRowIds: Set<RowId> = new Set();
     private addButtonId: ButtonId | null = null;
     private saveButtonId: ButtonId | null = null;
+    private onCommitCallback: ((drafts: any[]) => Promise<void>) | null = null;
 
     onInit(): void {
         console.log('📝 DraftPlugin: Initialized');
@@ -105,25 +106,60 @@ export class DraftPlugin extends BasePlugin {
     }
 
     /**
+     * PUBLIC API: Register a callback to be called when drafts are committed
+     * This is typically called by RestPlugin or other persistence plugins
+     */
+    public onCommit(callback: (drafts: any[]) => Promise<void>): void {
+        this.onCommitCallback = callback;
+        console.log('📝 DraftPlugin: Commit callback registered');
+    }
+
+    /**
+     * PUBLIC API: Get all draft rows data
+     */
+    public getDraftRows(): any[] {
+        return Array.from(this.draftRowIds)
+            .map(id => this.tableAPIs?.getRow(id))
+            .filter(row => row !== undefined)
+            .map(row => row!.data);
+    }
+
+    /**
      * Handle "Save" button click
      * Saves all draft rows and removes the Save button
      */
-    private handleSave(): void {
+    private async handleSave(): Promise<void> {
         console.log(`📝 DraftPlugin: Saving ${this.draftRowIds.size} draft rows`);
 
-        // In a real implementation, you would:
-        // 1. Validate row data
-        // 2. Send to backend
-        // 3. Mark rows as saved
+        if (this.onCommitCallback) {
+            try {
+                const drafts = this.getDraftRows();
 
-        // For demo purposes, just clear drafts
-        const count = this.draftRowIds.size;
-        this.draftRowIds.clear();
+                // Call the callback (RestPlugin will handle server communication)
+                await this.onCommitCallback(drafts);
 
-        console.log(`📝 DraftPlugin: ${count} draft rows saved and cleared`);
+                // After successful commit, clear drafts
+                this.draftRowIds.forEach(id => this.tableAPIs?.deleteRow(id));
+                this.draftRowIds.clear();
 
-        // Remove "Save" button
-        this.removeSaveButton();
+                console.log(`📝 DraftPlugin: ${drafts.length} draft rows committed successfully`);
+
+                // Remove "Save" button
+                this.removeSaveButton();
+            } catch (error) {
+                console.error('📝 DraftPlugin: Failed to commit drafts:', error);
+                // TODO: Show error notification to user
+            }
+        } else {
+            console.warn('📝 DraftPlugin: No commit callback registered - clearing drafts without saving');
+
+            // No callback registered - just clear drafts (demo mode)
+            const count = this.draftRowIds.size;
+            this.draftRowIds.clear();
+            console.log(`📝 DraftPlugin: ${count} draft rows cleared (no persistence)`);
+
+            this.removeSaveButton();
+        }
     }
 
     /**

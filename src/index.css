@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+/* Custom Grid Scrollbar - black with fixed-size thumb */
+.grid-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(0 0 0) rgb(245 245 244); /* black thumb, stone-100 track */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.grid-scrollbar::-webkit-scrollbar {
+    height: 12px;
+}
+
+.grid-scrollbar::-webkit-scrollbar-track {
+    background: rgb(245 245 244); /* stone-100 */
+    border-top: 0.5px solid rgb(229 229 229); /* neutral-200 */
+}
+
+.grid-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(0 0 0); /* black */
+    background-clip: padding-box;
+    border: 4px solid transparent; /* creates padding effect */
+    border-radius: 0;
+    width: 80px; /* fixed size */
+    max-width: 80px; /* never grows beyond this */
+}
+
+.grid-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(38 38 38); /* neutral-800 */
+    background-clip: padding-box;
+}
+
+.grid-scrollbar::-webkit-scrollbar-thumb:active {
+    background: rgb(64 64 64); /* neutral-700 */
+    background-clip: padding-box;
+}

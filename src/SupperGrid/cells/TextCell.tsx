@@ -14,11 +14,12 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     config,
     registerCommands,
     registerActions,
-    runAction
+    runAction,
+    useCellValue
 }) => {
-    // Initialize state only once, ignore future prop changes
-    // Handle null values explicitly
-    const [internalValue, setInternalValue] = useState(() => value ?? '');
+    // Use the context-aware hook - automatically syncs with row data
+    const [internalValue, setInternalValue] = useCellValue(value ?? '');
+
     const [isFocused, setIsFocused] = useState(false);
     const [isSelected, setIsSelected] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -84,9 +85,9 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                 api.requestKeyboard();
             },
 
-            // Save action - save value and release keyboard
+            // Save action - update value (which syncs to row data) and release keyboard
             saveAction: (api: CellTableAPIs, newValue: string) => {
-                api.save(newValue);
+                api.save(newValue);  // Dispatches updateValue command (which calls setInternalValue via command handler)
                 api.releaseKeyboard();
             },
 
@@ -97,11 +98,11 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
 
             // Navigate action - save then move in direction
             navigateAction: (api: CellTableAPIs, direction: 'up' | 'down' | 'left' | 'right') => {
-                api.save(internalValue);
+                setInternalValue(internalValue);  // Ensure row data is synced
                 api.navigate(direction);
             }
         });
-    }, [registerActions, internalValue]);
+    }, [registerActions, internalValue, setInternalValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

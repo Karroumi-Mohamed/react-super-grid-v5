@@ -126,7 +126,7 @@ type RowCommand<K extends keyof RowCommandMap = keyof RowCommandMap> = {
 };
 
 type SpaceCommandMap = {
-  addRow: { rowData: any; position?: 'top' | 'bottom' };
+  addRow: { rowData: any; position?: 'top' | 'bottom'; render?: boolean };
   render: {}; // Force space to re-render
   // Note: deleteRow is handled by RowCommand system, not SpaceCommand
 };
@@ -172,6 +172,7 @@ interface TableRowAPI {
     getRow: (rowId: RowId) => Row<any> | undefined;
     getCell: (cellId: CellId) => Cell | undefined;
     getCellActionAPIs: (cellId: CellId) => { registerActions: (actionMap: ActionMap) => void; runAction: (actionName: string, payload?: any) => void };
+    updateRowData: (rowId: RowId, data: any) => void;
 }
 
 export type { CellCommandHandeler, RowCommandHandler, TableRowAPI };
@@ -197,6 +198,7 @@ type CellProps<T, C extends BaseCellConfig> = {
     registerCommands: (handler: CellCommandHandeler) => void;
     registerActions: (actionMap: ActionMap) => void;
     runAction: (actionName: string, payload?: any) => void;
+    useCellValue: <V = T>(initialValue: V) => readonly [V, (newValue: V) => void];
 };
 
 type CellComponent<T, C extends BaseCellConfig> = React.FC<CellProps<T, C>>;
