@@ -139,7 +139,7 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     return (
         <div
             className={cn(
-                'p-2 transition-colors min-h-[40px] flex items-center',
+                'p-2 transition-colors min-h-[40px] flex items-center ring-inset w-full',
                 config.readOnly && 'bg-gray-100 cursor-not-allowed',
                 isSelected && isFocused
                     ? 'bg-blue-100 ring-blue-400 ring-[0.5px]' // hybrid state
@@ -150,7 +150,6 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                             : ''
             )}
             data-cell-id={id}
-            style={{ width: config.width }}
         >
             {isEditing && !config.readOnly ? (
                 <input
