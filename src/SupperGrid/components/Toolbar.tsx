@@ -26,7 +26,7 @@ export function Toolbar({ buttons }: ToolbarProps) {
     }
 
     return (
-        <div className="w-full border-b border-gray-200 bg-white">
+        <div className="w-full bg-white">
             <div className="flex items-center justify-between gap-2 py-2 flex-wrap">
                 {/* Left section */}
                 <div className="flex items-center gap-1 flex-wrap">

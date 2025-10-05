@@ -271,7 +271,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
                                 'border-t-[1px]',
                                 isFirst && 'border-l-[1px]',
                                 'border-b-[1px]',
-                                !isLast && 'border-r-[1px]',
+                                'border-r-[1px]', // All headers including last get right border
                                 'border-neutral-200'
                             );
 
@@ -419,7 +419,7 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, isFirs
                     isFirstRow && 'border-t-[1px]',
                     index === 0 && 'border-l-[1px]',
                     'border-b-[1px]', // Always add bottom border
-                    index !== columns.length - 1 && 'border-r-[1px]',
+                    'border-r-[1px]', // All cells including last column get right border
                     'border-neutral-200'
                 );
 

@@ -143,11 +143,11 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                 // Cell states
                 config.readOnly && 'bg-gray-100 cursor-not-allowed',
                 isSelected && isFocused
-                    ? 'bg-neutral-100 ring-[1px] ring-blue-400 z-10' // hybrid: focus bg + select ring (outside)
+                    ? 'bg-neutral-200 ring-[1px] ring-green-300 z-10' // hybrid: focus bg + select ring (outside)
                     : isSelected
-                        ? 'bg-blue-50 ring-[1px] ring-blue-400 z-10'
+                        ? 'bg-green-50 ring-[1px] ring-green-300 z-10'
                         : isFocused
-                            ? 'bg-neutral-100 ring-[1px] ring-neutral-800 z-10'
+                            ? 'bg-neutral-200 ring-[1px] ring-neutral-800 z-10'
                             : 'bg-white z-0' // normal: no ring, container has border
             )}
             data-cell-id={id}
