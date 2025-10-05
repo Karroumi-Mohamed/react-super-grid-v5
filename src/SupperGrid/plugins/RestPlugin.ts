@@ -143,6 +143,11 @@ export interface RestPluginConfig {
     endpoints: RestEndpointConfig;
 
     /**
+     * Table column configuration (needed to map cell IDs to column keys)
+     */
+    columns?: Array<{ key: string; [key: string]: any }>;
+
+    /**
      * Error handling configuration
      */
     errorHandling?: RestErrorConfig;
@@ -340,7 +345,7 @@ export class RestPlugin extends BasePlugin {
     }
 
     /**
-     * Send cell update to server
+     * Send cell update to server and refresh row data
      */
     private async sendCellUpdate(rowId: RowId, cellId: CellId, value: any): Promise<void> {
         // Get column key from cell ID (format: "colIndex-rowString-uuid")
@@ -353,11 +358,43 @@ export class RestPlugin extends BasePlugin {
         this.log(`🌐 RestPlugin: Updating cell ${cellId} (row: ${rowId}, column: ${columnKey}, value: ${value})`);
 
         try {
-            await this.makeUpdateRequest(rowId, columnKey, value);
-            this.log(`🌐 RestPlugin: Cell update successful`);
+            // Send update to server and get updated row back
+            const updatedRow = await this.makeUpdateRequest(rowId, columnKey, value);
+            this.log(`🌐 RestPlugin: Cell update successful, received updated row:`, updatedRow);
+
+            // Update the entire row with fresh data from server
+            if (updatedRow) {
+                this.updateRowData(rowId, updatedRow);
+                this.log(`🌐 RestPlugin: Row ${rowId} refreshed with server data`);
+            }
         } catch (error) {
             await this.handleError(error as Error, 'update', { rowId, cellId, columnKey, value });
         }
+    }
+
+    /**
+     * Update row data with fresh data from server
+     */
+    private updateRowData(rowId: RowId, newData: any): void {
+        const row = this.tableAPIs!.getRowRegistry().get(rowId);
+        if (!row) {
+            console.error(`🌐 RestPlugin: Row ${rowId} not found in registry`);
+            return;
+        }
+
+        // Update row data
+        row.data = newData;
+        this.tableAPIs!.getRowRegistry().register(rowId, row);
+
+        // Update all cells in this row with new values
+        row.cells.forEach(cellId => {
+            const columnKey = this.getColumnKeyFromCellId(cellId);
+            if (columnKey && columnKey in newData) {
+                this.tableAPIs!.updateCellValue(cellId, newData[columnKey]);
+            }
+        });
+
+        this.log(`🌐 RestPlugin: Updated row ${rowId} data and ${row.cells.length} cells`);
     }
 
     // ========================================================================
@@ -679,10 +716,6 @@ export class RestPlugin extends BasePlugin {
      * Get column key from cell ID format "colIndex-rowString-uuid"
      */
     private getColumnKeyFromCellId(cellId: CellId): string | null {
-        // TODO: This needs to be improved - we need a way to map cell ID to column config
-        // For now, we'll need to traverse the config to find the column
-        // This is a limitation that might need architectural improvement
-
         // Parse column index from cell ID
         const parts = cellId.split('-');
         if (parts.length < 3) return null;
@@ -690,10 +723,15 @@ export class RestPlugin extends BasePlugin {
         const colIndex = parseInt(parts[0], 10);
         if (isNaN(colIndex)) return null;
 
-        // Get column config from table (we need access to table config here)
-        // This is a TODO - we need to store column config in plugin or pass it differently
-        console.warn('🌐 RestPlugin: Column key extraction needs implementation');
-        return `column_${colIndex}`; // Placeholder
+        // Get column key from config
+        if (!this.config.columns || colIndex >= this.config.columns.length) {
+            this.log(`🌐 RestPlugin: Column index ${colIndex} out of range or columns not configured`);
+            return null;
+        }
+
+        const columnKey = this.config.columns[colIndex].key;
+        this.log(`🌐 RestPlugin: Mapped cell ${cellId} to column key: ${columnKey}`);
+        return columnKey;
     }
 
     /**

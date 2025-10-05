@@ -56,8 +56,22 @@ interface Account {
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+// Column Configuration (defined first so we can reference in RestPlugin)
+const columns: TableConfig<JournalEntry> = [
+    { key: 'date', header: 'Date', width: '120px', cell: TextCell },
+    { key: 'accountCode', header: 'Account Code', width: '130px', cell: TextCell },
+    { key: 'accountName', header: 'Account Name', width: '200px', cell: TextCell },
+    { key: 'description', header: 'Description', width: '300px', cell: TextCell },
+    { key: 'debit', header: 'Debit', width: '120px', cell: TextCell },
+    { key: 'credit', header: 'Credit', width: '120px', cell: TextCell },
+    { key: 'balance', header: 'Balance', width: '120px', cell: TextCell },
+    { key: 'reference', header: 'Reference', width: '130px', cell: TextCell },
+    { key: 'status', header: 'Status', width: '100px', cell: TextCell }
+];
+
 // RestPlugin Configuration
 const restConfig = {
+    columns, // Pass columns for cell ID to column key mapping
     baseUrl: API_BASE_URL,
 
     auth: {
@@ -136,20 +150,6 @@ export function AccountingExample() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // const plugins = [
     //     focusPlugin, // this allows focusing feature + keybaord navigation
     //     editPlugin,
@@ -158,19 +158,6 @@ export function AccountingExample() {
     //     // draftPlugin,
     //     // restPlugin
     // ]; // this array of plugins passed to the Table Library
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // ========================================================================
@@ -219,7 +206,7 @@ export function AccountingExample() {
     // Column Configuration
     // ========================================================================
 
-    const columns: TableConfig<JournalEntry> = [
+    /* const columns: TableConfig<JournalEntry> = [
         {
             key: 'date',
             header: 'Date',
@@ -274,14 +261,14 @@ export function AccountingExample() {
             width: '100px',
             cell: TextCell
         }
-    ];
+    ]; */
 
-                            // focusPlugin, // this allows focusing feature + keybaord navigation
-                            // editPlugin,
-                            // selectPlugin,
-                            // multiEditPlugin,
-                            // draftPlugin,
-                            // restPlugin
+    // focusPlugin, // this allows focusing feature + keybaord navigation
+    // editPlugin,
+    // selectPlugin,
+    // multiEditPlugin,
+    // draftPlugin,
+    // restPlugin
     // ========================================================================
     // Render
     // ========================================================================
@@ -326,23 +313,10 @@ export function AccountingExample() {
             <div className="max-w-[1600px] mx-auto">
                 {/* Grid */}
                 <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                    <SuperGrid
-                        ref={gridRef}
-                        data={journalEntries}
-                        config={columns}
-                        plugins={[
-                            // lets add focusing functionality
-                            new FocusPlugin(),
-                            // what if we wanted cell editing?
-                            new EditPlugin(),
-                            // selection? with keyboard? like excel?
-                            new SelectPlugin(),
-                            // what about editing all selected cells all at once?
-                            new MultiEditPlugin(),
-                            // adding new rows instead of using forms?
-                            new DraftPlugin(), // also server integration that works with the draft plugin?
 
-                            new RestPlugin(restConfig),
+                    <SuperGrid ref={gridRef} data={journalEntries} config={columns}
+                        plugins={[
+
                         ]}
                     />
                 </div>
