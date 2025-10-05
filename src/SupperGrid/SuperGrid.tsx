@@ -224,7 +224,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
 });
 
 // Row component that uses the context-aware TableRowAPI
-export function GridRow<TData>({ id, data, columns, tableApis, rowString }: RowProps<TData>) {
+export function GridRow<TData>({ id, data, columns, tableApis, rowString, isFirstRow, isLastRow }: RowProps<TData>) {
     const [isDestroyed, setIsDestroyed] = useState(false);
     const renderCountRef = useRef(0);
 
@@ -314,7 +314,13 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString }: RowP
                     registerCommands: cellRegisterCommands,
                     registerActions: actionAPIs.registerActions,
                     runAction: actionAPIs.runAction,
-                    useCellValue: dummyHook
+                    useCellValue: dummyHook,
+                    position: {
+                        isFirstRow: isFirstRow ?? false,
+                        isFirstCol: index === 0,
+                        isLastRow: isLastRow ?? false,
+                        isLastCol: index === columns.length - 1
+                    }
                 };
 
                 // Render the actual cell component wrapped in event-capturing container

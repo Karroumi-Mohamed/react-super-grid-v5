@@ -191,6 +191,13 @@ interface BaseCellConfig {
     className?: string;
 }
 
+type CellPosition = {
+    isFirstRow: boolean;
+    isFirstCol: boolean;
+    isLastRow: boolean;
+    isLastCol: boolean;
+};
+
 type CellProps<T, C extends BaseCellConfig> = {
     id: CellId;
     value: T | null; // Force cells to handle null values
@@ -199,12 +206,13 @@ type CellProps<T, C extends BaseCellConfig> = {
     registerActions: (actionMap: ActionMap) => void;
     runAction: (actionName: string, payload?: any) => void;
     useCellValue: <V = T>(initialValue: V) => readonly [V, (newValue: V) => void];
+    position: CellPosition;
 };
 
 type CellComponent<T, C extends BaseCellConfig> = React.FC<CellProps<T, C>>;
 
 type ExtractCellConfig<T> = T extends CellComponent<any, infer C> ? C : never;
-export type { BaseCellConfig, CellProps, CellComponent, ExtractCellConfig };
+export type { BaseCellConfig, CellProps, CellComponent, ExtractCellConfig, CellPosition };
 
 type RowProps<T> = {
     id: RowId;
@@ -213,6 +221,7 @@ type RowProps<T> = {
     tableApis: TableRowAPI;
     rowIndex: number;
     rowString: string; // String-based row position for cell ID generation
+    isFirstRow?: boolean;
     isLastRow?: boolean;
     onCellsRegistered?: () => void;
 };

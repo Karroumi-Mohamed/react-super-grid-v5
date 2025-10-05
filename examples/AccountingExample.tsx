@@ -121,27 +121,57 @@ const restConfig = {
 
 export function AccountingExample() {
     const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [_accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const gridRef = useRef<SuperGridRef>(null);
 
-    // Plugins
-    const focusPlugin = useRef(new FocusPlugin()).current;
-    const editPlugin = useRef(new EditPlugin()).current;
-    const selectPlugin = useRef(new SelectPlugin()).current;
-    const multiEditPlugin = useRef(new MultiEditPlugin()).current;
-    const draftPlugin = useRef(new DraftPlugin()).current;
-    const restPlugin = useRef(new RestPlugin(restConfig)).current;
+    // Plugins (commented out - enable as needed)
+    // const focusPlugin = useRef(new FocusPlugin()).current;
+    // const editPlugin = useRef(new EditPlugin()).current;
+    // const selectPlugin = useRef(new SelectPlugin()).current;
+    // const multiEditPlugin = useRef(new MultiEditPlugin()).current;
+    // const draftPlugin = useRef(new DraftPlugin()).current;
+    // const restPlugin = useRef(new RestPlugin(restConfig)).current;
 
-    const plugins = [
-        focusPlugin,
-        editPlugin,
-        selectPlugin,
-        multiEditPlugin,
-        draftPlugin,
-        restPlugin
-    ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // const plugins = [
+    //     focusPlugin, // this allows focusing feature + keybaord navigation
+    //     editPlugin,
+    //     selectPlugin,
+    //     multiEditPlugin,
+    //     // draftPlugin,
+    //     // restPlugin
+    // ]; // this array of plugins passed to the Table Library
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // ========================================================================
     // Data Fetching
@@ -246,6 +276,12 @@ export function AccountingExample() {
         }
     ];
 
+                            // focusPlugin, // this allows focusing feature + keybaord navigation
+                            // editPlugin,
+                            // selectPlugin,
+                            // multiEditPlugin,
+                            // draftPlugin,
+                            // restPlugin
     // ========================================================================
     // Render
     // ========================================================================
@@ -271,8 +307,8 @@ export function AccountingExample() {
                         Make sure the API server is running:
                     </p>
                     <pre className="bg-gray-800 text-green-400 p-3 rounded text-xs overflow-x-auto">
-cd server{'\n'}
-npm run dev
+                        cd server{'\n'}
+                        npm run dev
                     </pre>
                     <button
                         onClick={() => window.location.reload()}
@@ -288,98 +324,27 @@ npm run dev
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-[1600px] mx-auto">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        📊 ERP Accounting Module
-                    </h1>
-                    <p className="text-gray-600">
-                        Journal entries management with React Super Grid
-                    </p>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-                        <div className="text-sm text-gray-600 mb-1">Total Entries</div>
-                        <div className="text-2xl font-bold text-gray-900">
-                            {journalEntries.length}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-                        <div className="text-sm text-gray-600 mb-1">Chart of Accounts</div>
-                        <div className="text-2xl font-bold text-gray-900">
-                            {accounts.length}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-                        <div className="text-sm text-gray-600 mb-1">Server Status</div>
-                        <div className="text-2xl font-bold text-green-600">
-                            🟢 Connected
-                        </div>
-                    </div>
-                </div>
-
-                {/* Instructions */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-blue-900 mb-2">💡 How to Use</h3>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                        <li>• <strong>Click</strong> a cell to focus it</li>
-                        <li>• <strong>Double-click</strong> or press <kbd className="px-1 py-0.5 bg-white rounded">Enter</kbd> to edit</li>
-                        <li>• <strong>Press "+"</strong> button to add draft entries (top right)</li>
-                        <li>• <strong>Press "Save"</strong> to commit drafts to server</li>
-                        <li>• <strong>Select multiple cells</strong> (Shift+Click) and edit one to update all</li>
-                        <li>• <strong>Arrow keys</strong> to navigate between cells</li>
-                        <li>• <strong>Changes auto-save</strong> to server (with 500ms debounce)</li>
-                    </ul>
-                </div>
-
-                {/* Account Reference */}
-                <details className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-                    <summary className="cursor-pointer font-semibold text-gray-900">
-                        📚 Chart of Accounts Reference
-                    </summary>
-                    <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {['asset', 'liability', 'equity', 'revenue', 'expense'].map(type => (
-                            <div key={type}>
-                                <h4 className="font-semibold text-sm text-gray-700 mb-2 capitalize">
-                                    {type}
-                                </h4>
-                                <div className="space-y-1">
-                                    {accounts
-                                        .filter(acc => acc.type === type)
-                                        .map(acc => (
-                                            <div key={acc.code} className="text-xs text-gray-600">
-                                                <span className="font-mono">{acc.code}</span> - {acc.name}
-                                            </div>
-                                        ))
-                                    }
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </details>
-
                 {/* Grid */}
                 <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
                     <SuperGrid
                         ref={gridRef}
                         data={journalEntries}
                         config={columns}
-                        plugins={plugins}
-                    />
-                </div>
+                        plugins={[
+                            // lets add focusing functionality
+                            new FocusPlugin(),
+                            // what if we wanted cell editing?
+                            new EditPlugin(),
+                            // selection? with keyboard? like excel?
+                            new SelectPlugin(),
+                            // what about editing all selected cells all at once?
+                            new MultiEditPlugin(),
+                            // adding new rows instead of using forms?
+                            new DraftPlugin(), // also server integration that works with the draft plugin?
 
-                {/* Footer */}
-                <div className="mt-6 text-center text-sm text-gray-500">
-                    <p>
-                        API Server: <code className="bg-gray-100 px-2 py-1 rounded">{API_BASE_URL}</code>
-                    </p>
-                    <p className="mt-2">
-                        Powered by React Super Grid with RestPlugin + DraftPlugin
-                    </p>
+                            new RestPlugin(restConfig),
+                        ]}
+                    />
                 </div>
             </div>
         </div>

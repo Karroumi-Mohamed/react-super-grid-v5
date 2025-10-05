@@ -478,6 +478,7 @@ export function Space<TData>({ spaceId, tableCore, config, initialData }: SpaceP
                     tableApis: tableApis,
                     rowIndex: index,
                     rowString: stringPosition,
+                    isFirstRow: index === 0,
                     isLastRow: index === rowIds.length - 1
                 };
 

@@ -15,7 +15,8 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
     registerCommands,
     registerActions,
     runAction,
-    useCellValue
+    useCellValue,
+    position: _position // Not used, borders handled by container
 }) => {
     // Use the context-aware hook - automatically syncs with row data
     const [internalValue, setInternalValue] = useCellValue(value ?? '');
@@ -135,19 +136,19 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
         }
     };
 
-
     return (
         <div
             className={cn(
-                'p-2 transition-colors min-h-[40px] flex items-center ring-inset w-full',
+                'p-2 transition-colors min-h-[40px] flex items-center w-full relative',
+                // Cell states
                 config.readOnly && 'bg-gray-100 cursor-not-allowed',
                 isSelected && isFocused
-                    ? 'bg-blue-100 ring-blue-400 ring-[0.5px]' // hybrid state
+                    ? 'bg-neutral-100 ring-[1px] ring-blue-400 z-10' // hybrid: focus bg + select ring (outside)
                     : isSelected
-                        ? 'bg-blue-50 ring-blue-400 ring-[0.5px]'
+                        ? 'bg-blue-50 ring-[1px] ring-blue-400 z-10'
                         : isFocused
-                            ? 'bg-neutral-100 ring-neutral-800 ring-[0.5px]'
-                            : ''
+                            ? 'bg-neutral-100 ring-[1px] ring-neutral-800 z-10'
+                            : 'bg-white z-0' // normal: no ring, container has border
             )}
             data-cell-id={id}
         >

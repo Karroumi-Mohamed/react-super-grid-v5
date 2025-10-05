@@ -416,7 +416,7 @@ export function SpaceOptimized<TData>({ spaceId, tableCore, config, initialData,
             cellCoordinator.linkRowsCells(row.cells, bottom.cells);
     }
     return (
-        <>
+        <div className="flex flex-col">
             {currentRowIds.map((rowId, index) => {
                 const row = tableCore.getRowRegistry().get(rowId);
                 if (!row) return null;
@@ -438,6 +438,7 @@ export function SpaceOptimized<TData>({ spaceId, tableCore, config, initialData,
                     tableApis: tableApis,
                     rowIndex: index,
                     rowString: stringPosition,
+                    isFirstRow: index === 0,
                     isLastRow: index === currentRowIds.length - 1,
                     onCellsRegistered: () => {
                         linkRowCells(rowId);
@@ -461,7 +462,7 @@ export function SpaceOptimized<TData>({ spaceId, tableCore, config, initialData,
                     />
                 );
             })}
-        </>
+        </div>
     );
 }
 

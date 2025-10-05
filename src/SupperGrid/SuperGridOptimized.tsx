@@ -260,28 +260,36 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
             {/* Scrollable grid container */}
             <div className="overflow-x-auto grid-scrollbar">
                 {/* Grid content - can be wider than container */}
-                <div className="w-fit">
+                <div className="w-fit flex flex-col">
                     {/* Header row */}
                     <div className="flex">
-                        {config.map((col, index) => (
-                            <div
-                                key={index}
-                                className={cn(
-                                    'border-neutral-200 border-[0.5px] h-10 inset-0 box-border',
-                                    'ring-[0.5px] ring-inset ring-transparent'
-                                )}
-                                style={{ width: `calc(${col.width} + 1px)` }}
-                            >
-                                <div className="h-full w-full flex justify-start items-center p-2 bg-stone-50 hover:bg-stone-100 hover:ring-stone-800 ring-transparent ring-[0.5px]">
-                                    {col.header}
+                        {config.map((col, index) => {
+                            const isFirst = index === 0;
+                            const isLast = index === config.length - 1;
+                            const borderClasses = cn(
+                                'h-10 box-border',
+                                'border-t-[1px]',
+                                isFirst && 'border-l-[1px]',
+                                // No border-b, let first data row handle it
+                                !isLast && 'border-r-[1px]',
+                                'border-neutral-200'
+                            );
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={borderClasses}
+                                    style={{ width: col.width }}
+                                >
+                                    <div className="h-full w-full flex justify-start items-center p-2 bg-stone-50 hover:bg-stone-100 hover:ring-stone-800 ring-transparent ring-[1px]">
+                                        {col.header}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     {/* Spaces: Plugin spaces (top) + Table space (bottom) */}
-                    <div className="w-full">
-                        {renderSpaces()}
-                    </div>
+                    {renderSpaces()}
                 </div>
             </div>
         </div>
@@ -289,7 +297,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
 });
 
 // Row component that uses the context-aware TableRowAPI (reuse existing implementation)
-export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCellsRegistered }: RowProps<TData>) {
+export function GridRow<TData>({ id, data, columns, tableApis, rowString, isFirstRow, isLastRow, onCellsRegistered }: RowProps<TData>) {
     const [isDestroyed, setIsDestroyed] = useState(false);
     const renderCountRef = useRef(0);
 
@@ -393,19 +401,34 @@ export function GridRow<TData>({ id, data, columns, tableApis, rowString, onCell
                     registerCommands: cellRegisterCommands,
                     registerActions: actionAPIs.registerActions,
                     runAction: actionAPIs.runAction,
-                    useCellValue: cellValueHook
+                    useCellValue: cellValueHook,
+                    position: {
+                        isFirstRow: isFirstRow ?? false,
+                        isFirstCol: index === 0,
+                        isLastRow: isLastRow ?? false,
+                        isLastCol: index === columns.length - 1
+                    }
                 };
 
                 // Render the actual cell component wrapped in event-capturing container
                 const CellComponent = column.cell;
+
+                // Conditional borders based on position
+                const borderClasses = cn(
+                    'box-border',
+                    isFirstRow && 'border-t-[1px]',
+                    index === 0 && 'border-l-[1px]',
+                    'border-b-[1px]', // Always add bottom border
+                    index !== columns.length - 1 && 'border-r-[1px]',
+                    'border-neutral-200'
+                );
+
                 return (
                     <div
                         key={cellId}
-                        className={cn(
-                            'border-[0.5px] border-neutral-200 box-border'
-                        )}
+                        className={borderClasses}
                         data-cell-id={cellId}
-                        style={{ width: `calc(${column.width} + 1px)` }}
+                        style={{ width: column.width }}
                         onClick={(e) => tableApis.sendMouseEvent(cellId, 'click', e.nativeEvent)}
                         onDoubleClick={(e) => tableApis.sendMouseEvent(cellId, 'dblclick', e.nativeEvent)}
                         onContextMenu={(e) => tableApis.sendMouseEvent(cellId, 'contextmenu', e.nativeEvent)}
