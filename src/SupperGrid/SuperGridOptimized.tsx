@@ -270,7 +270,7 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
                                 'h-10 box-border',
                                 'border-t-[1px]',
                                 isFirst && 'border-l-[1px]',
-                                // No border-b, let first data row handle it
+                                'border-b-[1px]',
                                 !isLast && 'border-r-[1px]',
                                 'border-neutral-200'
                             );
