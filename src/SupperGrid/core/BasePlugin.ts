@@ -18,8 +18,8 @@ export interface TablePluginAPIs {
         targetId: RowId,
         command: Omit<RowCommand<K>, 'targetId' | 'originPlugin' | 'timestamp'>
     ): void;
-    createRow(rowData: any, position?: 'top' | 'bottom'): void;
-    createRowInTableSpace(rowData: any, position?: 'top' | 'bottom'): void;
+    createRow(rowData: any, position?: 'top' | 'bottom', render?: boolean): void;
+    createRowInTableSpace(rowData: any, position?: 'top' | 'bottom', render?: boolean): void;
     getCell(cellId: CellId): Cell | undefined;
     getRow(rowId: RowId): import('./types').Row<any> | undefined;
     getCellRegistry(): import('./Registries').CellRegistry;

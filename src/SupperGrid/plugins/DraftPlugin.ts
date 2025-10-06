@@ -72,8 +72,8 @@ export class DraftPlugin extends BasePlugin {
         // Get current row count to track the new row
         const beforeRowIds = this.tableAPIs.getRowIds();
 
-        // Create row in plugin's own space at the top
-        this.tableAPIs.createRow(draftData, 'top');
+        // Create row in plugin's own space at the top with render flag
+        this.tableAPIs.createRow(draftData, 'top', true);
 
         // Wait a tick for row to be registered, then track it
         setTimeout(() => {
