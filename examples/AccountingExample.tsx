@@ -142,23 +142,23 @@ export function AccountingExample() {
     const gridRef = useRef<SuperGridRef>(null);
 
     // Plugins (commented out - enable as needed)
-    // const focusPlugin = useRef(new FocusPlugin()).current;
-    // const editPlugin = useRef(new EditPlugin()).current;
-    // const selectPlugin = useRef(new SelectPlugin()).current;
-    // const multiEditPlugin = useRef(new MultiEditPlugin()).current;
-    // const draftPlugin = useRef(new DraftPlugin()).current;
-    // const restPlugin = useRef(new RestPlugin<JournalEntry>(restConfig)).current;
+    const focusPlugin = useRef(new FocusPlugin()).current;
+    const editPlugin = useRef(new EditPlugin()).current;
+    const selectPlugin = useRef(new SelectPlugin()).current;
+    const multiEditPlugin = useRef(new MultiEditPlugin()).current;
+    const draftPlugin = useRef(new DraftPlugin()).current;
+    const restPlugin = useRef(new RestPlugin<JournalEntry>(restConfig)).current;
 
 
 
-    // const plugins = [
-    //     focusPlugin, // this allows focusing feature + keybaord navigation
-    //     editPlugin,
-    //     selectPlugin,
-    //     multiEditPlugin,
-    //     // draftPlugin,
-    //     // restPlugin
-    // ]; // this array of plugins passed to the Table Library
+    const plugins = [
+        focusPlugin, // this allows focusing feature + keybaord navigation
+        editPlugin,
+        selectPlugin,
+        multiEditPlugin,
+        draftPlugin,
+        restPlugin
+    ]; // this array of plugins passed to the Table Library
 
 
     // ========================================================================
@@ -316,14 +316,7 @@ export function AccountingExample() {
                 <div className="bg-white rounded-lg shadow-lg p-6">
 
                     <SuperGrid ref={gridRef} data={journalEntries} config={columns}
-                        plugins={[
-                            new FocusPlugin(),
-                            new EditPlugin(),
-                            new SelectPlugin(),
-                            new MultiEditPlugin(),
-                            new DraftPlugin(),
-                            new RestPlugin<JournalEntry>(restConfig),
-                        ]} 
+                        plugins={plugins}
                     />
                 </div>
             </div>

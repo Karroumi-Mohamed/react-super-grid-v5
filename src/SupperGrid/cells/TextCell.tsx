@@ -143,9 +143,9 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                 // Cell states
                 config.readOnly && 'bg-gray-100 cursor-not-allowed',
                 isSelected && isFocused
-                    ? 'bg-neutral-200 ring-[1px] ring-green-300 z-10' // hybrid: focus bg + select ring (outside)
+                    ? 'bg-neutral-200 ring-[1px] ring-lime-300 z-10' // hybrid: focus bg + select ring (outside)
                     : isSelected
-                        ? 'bg-green-50 ring-[1px] ring-green-300 z-10'
+                        ? 'bg-lime-50 ring-[1px] ring-lime-300 z-10'
                         : isFocused
                             ? 'bg-neutral-200 ring-[1px] ring-neutral-800 z-20'
                             : 'bg-white z-0' // normal: no ring, container has border
