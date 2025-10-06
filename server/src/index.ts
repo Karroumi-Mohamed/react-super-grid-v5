@@ -14,13 +14,21 @@ import {
     UpdateJournalEntryDto,
     ApiResponse,
     ApiErrorResponse,
-    BulkCreateRequest
+    BulkCreateRequest,
+    JournalEntry,
+    JournalEntryResponse
 } from './types';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+const toJournalEntryResponse = (entry: JournalEntry): JournalEntryResponse => ({
+    ...entry,
+    debit: entry.debit === 0 ? null : entry.debit,
+    credit: entry.credit === 0 ? null : entry.credit,
+});
 
 // ============================================================================
 // Middleware
@@ -70,10 +78,11 @@ app.get('/api/journal-entries', (req: Request, res: Response) => {
     console.log(`GET /api/journal-entries - sort: ${sortBy}, order: ${order}`);
 
     const entries = db.getAllJournalEntries(sortBy, order);
+    const responseEntries = entries.map(toJournalEntryResponse);
 
     res.json({
-        data: entries
-    } as ApiResponse<typeof entries>);
+        data: responseEntries
+    } as ApiResponse<JournalEntryResponse[]>);
 });
 
 /**
@@ -95,8 +104,8 @@ app.get('/api/journal-entries/:id', (req: Request, res: Response) => {
     }
 
     res.json({
-        data: entry
-    } as ApiResponse<typeof entry>);
+        data: toJournalEntryResponse(entry)
+    } as ApiResponse<JournalEntryResponse>);
 });
 
 /**
@@ -146,8 +155,8 @@ app.post('/api/journal-entries', (req: Request, res: Response) => {
     });
 
     res.status(201).json({
-        data: entry
-    } as ApiResponse<typeof entry>);
+        data: toJournalEntryResponse(entry)
+    } as ApiResponse<JournalEntryResponse>);
 });
 
 /**
@@ -193,8 +202,8 @@ app.post('/api/journal-entries/bulk', (req: Request, res: Response) => {
     );
 
     res.status(201).json({
-        data: entries
-    } as ApiResponse<typeof entries>);
+        data: entries.map(toJournalEntryResponse)
+    } as ApiResponse<JournalEntryResponse[]>);
 });
 
 /**
@@ -242,8 +251,8 @@ app.patch('/api/journal-entries/:id', (req: Request, res: Response) => {
     }
 
     res.json({
-        data: updatedEntry
-    } as ApiResponse<typeof updatedEntry>);
+        data: toJournalEntryResponse(updatedEntry)
+    } as ApiResponse<JournalEntryResponse>);
 });
 
 /**

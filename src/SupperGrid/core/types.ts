@@ -109,6 +109,10 @@ type CellCommand =
       timestamp?: number;
     });
 
+type CellCommandInput =
+    | (CellCommandNoPayload & { timestamp?: number })
+    | (CellCommandWithPayload & { timestamp?: number });
+
 type RowCommandMap = {
   delete: {};
   destroy: {};
@@ -139,7 +143,7 @@ type SpaceCommand<K extends keyof SpaceCommandMap = keyof SpaceCommandMap> = {
   timestamp?: number;
 };
 
-export type { CellCommand, RowCommand, RowCommandMap, SpaceCommand, SpaceCommandMap, SpaceCommandHandler };
+export type { CellCommand, CellCommandInput, RowCommand, RowCommandMap, SpaceCommand, SpaceCommandMap, SpaceCommandHandler };
 
 // Cell Table APIs - for action system
 export interface CellTableAPIs {

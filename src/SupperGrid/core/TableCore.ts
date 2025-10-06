@@ -1,5 +1,6 @@
 import type {
     CellCommand,
+    CellCommandInput,
     RowCommand,
     SpaceCommand,
     CellId,
@@ -65,7 +66,7 @@ export class TableCore {
     // Factory for plugin-specific APIs with bound context
     createPluginAPI(pluginName: string): TablePluginAPIs {
         return {
-            createCellCommand: (targetId: CellId, command: CellCommand) => {
+            createCellCommand: (targetId: CellId, command: CellCommandInput) => {
                 // Context automatically injected via closure
                 const contextCommand: CellCommand = {
                     ...command,

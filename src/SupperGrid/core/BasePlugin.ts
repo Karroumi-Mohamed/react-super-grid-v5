@@ -1,4 +1,4 @@
-import type { CellCommand, RowCommand, CellId, RowId, SpaceId, Cell, Space, ButtonId, ButtonVariant, ButtonPosition } from './types';
+import type { CellCommand, CellCommandInput, RowCommand, CellId, RowId, SpaceId, Cell, Space, ButtonId, ButtonVariant, ButtonPosition } from './types';
 import type { APIUsage } from './ActionRegistry';
 
 // Spatial comparison result types
@@ -13,7 +13,7 @@ export type HorizontalComparison = {
 } | null;
 
 export interface TablePluginAPIs {
-    createCellCommand(targetId: CellId, command: Omit<CellCommand, 'targetId' | 'originPlugin' | 'timestamp'>): void;
+    createCellCommand(targetId: CellId, command: CellCommandInput): void;
     createRowCommand<K extends keyof import('./types').RowCommandMap>(
         targetId: RowId,
         command: Omit<RowCommand<K>, 'targetId' | 'originPlugin' | 'timestamp'>

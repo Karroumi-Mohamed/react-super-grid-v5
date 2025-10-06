@@ -147,7 +147,7 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
                     : isSelected
                         ? 'bg-green-50 ring-[1px] ring-green-300 z-10'
                         : isFocused
-                            ? 'bg-neutral-200 ring-[1px] ring-neutral-800 z-10'
+                            ? 'bg-neutral-200 ring-[1px] ring-neutral-800 z-20'
                             : 'bg-white z-0' // normal: no ring, container has border
             )}
             data-cell-id={id}

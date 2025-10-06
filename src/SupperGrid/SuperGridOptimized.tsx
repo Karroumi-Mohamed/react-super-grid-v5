@@ -265,7 +265,6 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
                     <div className="flex">
                         {config.map((col, index) => {
                             const isFirst = index === 0;
-                            const isLast = index === config.length - 1;
                             const borderClasses = cn(
                                 'h-10 box-border',
                                 'border-t-[1px]',

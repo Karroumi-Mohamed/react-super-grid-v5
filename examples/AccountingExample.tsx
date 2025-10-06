@@ -21,7 +21,7 @@ import { EditPlugin } from '../src/SupperGrid/plugins/EditPlugin';
 import { SelectPlugin } from '../src/SupperGrid/plugins/SelectionPlugin';
 import { MultiEditPlugin } from '../src/SupperGrid/plugins/MultiEditPlugin';
 import { DraftPlugin } from '../src/SupperGrid/plugins/DraftPlugin';
-import { RestPlugin } from '../src/SupperGrid/plugins/RestPlugin';
+import { RestPlugin, type RestPluginConfig } from '../src/SupperGrid/plugins/RestPlugin';
 
 // ============================================================================
 // Types
@@ -70,9 +70,10 @@ const columns: TableConfig<JournalEntry> = [
 ];
 
 // RestPlugin Configuration
-const restConfig = {
+const restConfig: RestPluginConfig<JournalEntry> = {
     columns, // Pass columns for cell ID to column key mapping
     baseUrl: API_BASE_URL,
+    idKey: 'id',
 
     auth: {
         type: 'none' as const
@@ -87,8 +88,8 @@ const restConfig = {
 
         update: {
             method: 'PATCH' as const,
-            url: (rowId: string) => `${API_BASE_URL}/journal-entries/${rowId}`,
-            transformRequest: (_rowId: string, columnKey: string, value: any) => ({
+            url: (rowId) => `${API_BASE_URL}/journal-entries/${rowId}`,
+            transformRequest: (_rowId, columnKey, value) => ({
                 [columnKey]: value
             }),
             transformResponse: (response: any) => response.data
@@ -96,7 +97,7 @@ const restConfig = {
 
         delete: {
             method: 'DELETE' as const,
-            url: (rowId: string) => `${API_BASE_URL}/journal-entries/${rowId}`
+            url: (rowId) => `${API_BASE_URL}/journal-entries/${rowId}`
         },
 
         bulkCreate: {
@@ -146,7 +147,7 @@ export function AccountingExample() {
     // const selectPlugin = useRef(new SelectPlugin()).current;
     // const multiEditPlugin = useRef(new MultiEditPlugin()).current;
     // const draftPlugin = useRef(new DraftPlugin()).current;
-    // const restPlugin = useRef(new RestPlugin(restConfig)).current;
+    // const restPlugin = useRef(new RestPlugin<JournalEntry>(restConfig)).current;
 
 
 
@@ -312,12 +313,17 @@ export function AccountingExample() {
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-[1600px] mx-auto">
                 {/* Grid */}
-                <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                <div className="bg-white rounded-lg shadow-lg p-6">
 
                     <SuperGrid ref={gridRef} data={journalEntries} config={columns}
                         plugins={[
-
-                        ]}
+                            new FocusPlugin(),
+                            new EditPlugin(),
+                            new SelectPlugin(),
+                            new MultiEditPlugin(),
+                            new DraftPlugin(),
+                            new RestPlugin<JournalEntry>(restConfig),
+                        ]} 
                     />
                 </div>
             </div>

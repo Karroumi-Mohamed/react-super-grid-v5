@@ -7,12 +7,15 @@
 
 import type { RestPluginConfig } from './RestPlugin';
 
+type AnyRow = Record<string, any>;
+
 // ============================================================================
 // Example 1: Laravel Backend (Most Common)
 // ============================================================================
 
-export const laravelRestConfig: RestPluginConfig = {
+export const laravelRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'https://api.example.com/api',
+    idKey: 'id',
 
     auth: {
         type: 'bearer',
@@ -106,8 +109,9 @@ export const laravelRestConfig: RestPluginConfig = {
 // Example 2: Laravel with Sanctum Authentication
 // ============================================================================
 
-export const laravelSanctumConfig: RestPluginConfig = {
+export const laravelSanctumConfig: RestPluginConfig<AnyRow> = {
     baseUrl: '/api', // Same-origin requests
+    idKey: 'id',
 
     auth: {
         type: 'custom',
@@ -172,8 +176,9 @@ export const laravelSanctumConfig: RestPluginConfig = {
 // Example 3: RESTful API with JWT Authentication
 // ============================================================================
 
-export const jwtRestConfig: RestPluginConfig = {
+export const jwtRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'https://api.example.com/v1',
+    idKey: 'id',
 
     auth: {
         type: 'bearer',
@@ -246,8 +251,9 @@ export const jwtRestConfig: RestPluginConfig = {
 // Example 4: API Key Authentication (Third-party APIs)
 // ============================================================================
 
-export const apiKeyRestConfig: RestPluginConfig = {
+export const apiKeyRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'https://api.thirdparty.com/v2',
+    idKey: 'id',
 
     auth: {
         type: 'api-key',
@@ -300,8 +306,9 @@ export const apiKeyRestConfig: RestPluginConfig = {
 // Example 5: GraphQL Backend (via REST plugin)
 // ============================================================================
 
-export const graphqlRestConfig: RestPluginConfig = {
+export const graphqlRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'https://api.example.com/graphql',
+    idKey: 'id',
 
     auth: {
         type: 'bearer',
@@ -375,8 +382,9 @@ export const graphqlRestConfig: RestPluginConfig = {
 // Example 6: No Authentication (Public API / Development)
 // ============================================================================
 
-export const noAuthRestConfig: RestPluginConfig = {
+export const noAuthRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'http://localhost:3000/api',
+    idKey: 'id',
 
     auth: {
         type: 'none'
@@ -419,8 +427,9 @@ export const noAuthRestConfig: RestPluginConfig = {
 // Example 7: Complex Custom Headers (Enterprise)
 // ============================================================================
 
-export const enterpriseRestConfig: RestPluginConfig = {
+export const enterpriseRestConfig: RestPluginConfig<AnyRow> = {
     baseUrl: 'https://enterprise-api.example.com/api/v2',
+    idKey: 'id',
 
     auth: {
         type: 'custom',

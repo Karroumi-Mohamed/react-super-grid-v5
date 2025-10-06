@@ -1,5 +1,5 @@
 import { BasePlugin } from '../core/BasePlugin';
-import type { CellCommand, RowCommand, CellId, RowId } from '../core/types';
+import type { CellCommand, RowCommand, CellId, RowId, Row } from '../core/types';
 import type { APIUsage } from '../core/ActionRegistry';
 import type { DraftPlugin } from './DraftPlugin';
 
@@ -31,15 +31,18 @@ export type RestAuthConfig =
 /**
  * HTTP method configuration for CRUD operations
  */
-export interface RestEndpointConfig {
+type DataKey<TData extends Record<string, any>> = Extract<keyof TData, string>;
+type DataIdentifier<TData extends Record<string, any>> = TData[DataKey<TData>];
+
+export interface RestEndpointConfig<TData extends Record<string, any>> {
     /**
      * Create new row (default: POST /rows)
      */
     create?: {
         method?: 'POST' | 'PUT';
-        url: string | ((data: any) => string);
-        transformRequest?: (data: any) => any;
-        transformResponse?: (response: any) => any;
+        url: string | ((data: Partial<TData>) => string);
+        transformRequest?: (data: Partial<TData>) => any;
+        transformResponse?: (response: any) => TData;
     };
 
     /**
@@ -47,9 +50,9 @@ export interface RestEndpointConfig {
      */
     update?: {
         method?: 'PATCH' | 'PUT' | 'POST';
-        url: string | ((rowId: string, columnKey: string, value: any) => string);
-        transformRequest?: (rowId: string, columnKey: string, value: any) => any;
-        transformResponse?: (response: any) => any;
+        url: string | ((rowId: DataIdentifier<TData>, columnKey: DataKey<TData>, value: any) => string);
+        transformRequest?: (rowId: DataIdentifier<TData>, columnKey: DataKey<TData>, value: any) => any;
+        transformResponse?: (response: any) => TData;
     };
 
     /**
@@ -57,9 +60,9 @@ export interface RestEndpointConfig {
      */
     delete?: {
         method?: 'DELETE' | 'POST';
-        url: string | ((rowId: string) => string);
-        transformRequest?: (rowId: string) => any;
-        transformResponse?: (response: any) => any;
+        url: string | ((rowId: DataIdentifier<TData>) => string);
+        transformRequest?: (rowId: DataIdentifier<TData>) => any;
+        transformResponse?: (response: any) => TData;
     };
 
     /**
@@ -68,8 +71,8 @@ export interface RestEndpointConfig {
     bulkCreate?: {
         method?: 'POST' | 'PUT';
         url: string;
-        transformRequest?: (data: any[]) => any;
-        transformResponse?: (response: any) => any[];
+        transformRequest?: (data: Array<Partial<TData>>) => any;
+        transformResponse?: (response: any) => TData[];
     };
 }
 
@@ -126,7 +129,7 @@ export interface RestOptimizationConfig {
 /**
  * Main RestPlugin configuration
  */
-export interface RestPluginConfig {
+export interface RestPluginConfig<TData extends Record<string, any>> {
     /**
      * Base URL for API (e.g., 'https://api.example.com' or '/api')
      */
@@ -140,12 +143,17 @@ export interface RestPluginConfig {
     /**
      * Endpoint configuration for CRUD operations
      */
-    endpoints: RestEndpointConfig;
+    endpoints: RestEndpointConfig<TData>;
 
     /**
      * Table column configuration (needed to map cell IDs to column keys)
      */
-    columns?: Array<{ key: string; [key: string]: any }>;
+    columns?: Array<{ key: DataKey<TData>; [key: string]: any }>;
+
+    /**
+     * Field on the data object that uniquely identifies a row on the server
+     */
+    idKey: DataKey<TData>;
 
     /**
      * Error handling configuration
@@ -203,18 +211,18 @@ export class RestPluginError extends Error {
 // RestPlugin Implementation
 // ============================================================================
 
-export class RestPlugin extends BasePlugin {
+export class RestPlugin<TData extends Record<string, any>> extends BasePlugin {
     readonly name = 'rest-plugin';
     readonly version = '1.0.0';
     readonly dependencies = ['draft-plugin']; // Optional dependency
 
-    private config: RestPluginConfig;
+    private config: RestPluginConfig<TData>;
     private draftPlugin: DraftPlugin | null = null;
     private pendingRequests = new Map<string, AbortController>();
-    private updateQueue = new Map<string, { columnKey: string; value: any; timestamp: number }>();
+    private updateQueue = new Map<string, { columnKey: DataKey<TData>; value: any; timestamp: number }>();
     private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-    constructor(config: RestPluginConfig) {
+    constructor(config: RestPluginConfig<TData>) {
         super();
         this.config = this.normalizeConfig(config);
     }
@@ -222,8 +230,8 @@ export class RestPlugin extends BasePlugin {
     /**
      * Normalize and apply defaults to configuration
      */
-    private normalizeConfig(config: RestPluginConfig): RestPluginConfig {
-        const normalized: RestPluginConfig = {
+    private normalizeConfig(config: RestPluginConfig<TData>): RestPluginConfig<TData> {
+        const normalized: RestPluginConfig<TData> = {
             ...config,
             timeout: config.timeout ?? 30000,
             debug: config.debug ?? false,
@@ -348,34 +356,69 @@ export class RestPlugin extends BasePlugin {
      * Send cell update to server and refresh row data
      */
     private async sendCellUpdate(rowId: RowId, cellId: CellId, value: any): Promise<void> {
-        // Get column key from cell ID (format: "colIndex-rowString-uuid")
         const columnKey = this.getColumnKeyFromCellId(cellId);
         if (!columnKey) {
             console.error('🌐 RestPlugin: Could not determine column key from cell ID');
             return;
         }
 
-        this.log(`🌐 RestPlugin: Updating cell ${cellId} (row: ${rowId}, column: ${columnKey}, value: ${value})`);
+        const serverRowId = this.getServerRowIdentifier(rowId);
+        if (serverRowId === null) {
+            console.error(`🌐 RestPlugin: Row ${rowId} is missing identifier "${this.config.idKey}"`);
+            return;
+        }
+
+        this.log(
+            `🌐 RestPlugin: Updating cell ${cellId} (tableRow: ${rowId}, serverId: ${String(serverRowId)}, column: ${String(columnKey)}, value: ${value})`
+        );
 
         try {
-            // Send update to server and get updated row back
-            const updatedRow = await this.makeUpdateRequest(rowId, columnKey, value);
+            const updatedRow = await this.makeUpdateRequest(serverRowId, columnKey, value);
             this.log(`🌐 RestPlugin: Cell update successful, received updated row:`, updatedRow);
 
-            // Update the entire row with fresh data from server
             if (updatedRow) {
                 this.updateRowData(rowId, updatedRow);
                 this.log(`🌐 RestPlugin: Row ${rowId} refreshed with server data`);
             }
         } catch (error) {
-            await this.handleError(error as Error, 'update', { rowId, cellId, columnKey, value });
+            await this.handleError(error as Error, 'update', {
+                rowId,
+                serverRowId,
+                cellId,
+                columnKey,
+                value
+            });
         }
+    }
+
+    private getServerRowIdentifier(rowId: RowId): DataIdentifier<TData> | null {
+        const row = this.tableAPIs?.getRowRegistry().get(rowId) as Row<TData> | undefined;
+        if (!row) {
+            console.error(`🌐 RestPlugin: Row ${rowId} not found when resolving identifier`);
+            return null;
+        }
+
+        const data = row.data as TData | undefined;
+        if (!data) {
+            console.error(`🌐 RestPlugin: Row ${rowId} has no data when resolving identifier`);
+            return null;
+        }
+
+        const identifier = data[this.config.idKey];
+        if (identifier === undefined || identifier === null) {
+            console.error(
+                `🌐 RestPlugin: Row ${rowId} missing required identifier field "${this.config.idKey}"`
+            );
+            return null;
+        }
+
+        return identifier;
     }
 
     /**
      * Update row data with fresh data from server
      */
-    private updateRowData(rowId: RowId, newData: any): void {
+    private updateRowData(rowId: RowId, newData: TData): void {
         const row = this.tableAPIs!.getRowRegistry().get(rowId);
         if (!row) {
             console.error(`🌐 RestPlugin: Row ${rowId} not found in registry`);
@@ -390,7 +433,10 @@ export class RestPlugin extends BasePlugin {
         row.cells.forEach(cellId => {
             const columnKey = this.getColumnKeyFromCellId(cellId);
             if (columnKey && columnKey in newData) {
-                this.tableAPIs!.updateCellValue(cellId, newData[columnKey]);
+                this.tableAPIs!.createCellCommand(cellId, {
+                    name: 'updateValue',
+                    payload: { value: (newData as Record<string, any>)[columnKey] }
+                });
             }
         });
 
@@ -404,11 +450,11 @@ export class RestPlugin extends BasePlugin {
     /**
      * Handle draft commit from DraftPlugin
      */
-    private async handleDraftCommit(drafts: any[]): Promise<void> {
+    private async handleDraftCommit(drafts: Array<Partial<TData>>): Promise<void> {
         this.log(`🌐 RestPlugin: Committing ${drafts.length} drafts to server`);
 
         try {
-            let serverRows: any[];
+            let serverRows: TData[];
 
             // Use bulk endpoint if available, otherwise create individually
             if (this.config.endpoints.bulkCreate) {
@@ -526,7 +572,7 @@ export class RestPlugin extends BasePlugin {
     /**
      * Make CREATE request
      */
-    private async makeCreateRequest(data: any): Promise<any> {
+    private async makeCreateRequest(data: Partial<TData>): Promise<TData> {
         const endpoint = this.config.endpoints.create;
 
         const url = typeof endpoint?.url === 'function'
@@ -551,13 +597,13 @@ export class RestPlugin extends BasePlugin {
 
         return endpoint?.transformResponse
             ? endpoint.transformResponse(response)
-            : response;
+            : (response as TData);
     }
 
     /**
      * Make BULK CREATE request
      */
-    private async makeBulkCreateRequest(data: any[]): Promise<any[]> {
+    private async makeBulkCreateRequest(data: Array<Partial<TData>>): Promise<TData[]> {
         const endpoint = this.config.endpoints.bulkCreate;
         if (!endpoint) {
             throw new Error('Bulk create endpoint not configured');
@@ -582,18 +628,18 @@ export class RestPlugin extends BasePlugin {
 
         return endpoint.transformResponse
             ? endpoint.transformResponse(response)
-            : response;
+            : (response as TData[]);
     }
 
     /**
      * Make UPDATE request
      */
-    private async makeUpdateRequest(rowId: RowId, columnKey: string, value: any): Promise<any> {
+    private async makeUpdateRequest(rowId: DataIdentifier<TData>, columnKey: DataKey<TData>, value: any): Promise<TData | undefined> {
         const endpoint = this.config.endpoints.update;
 
         const url = typeof endpoint?.url === 'function'
             ? endpoint.url(rowId, columnKey, value)
-            : endpoint?.url ?? `${this.config.baseUrl}/rows/${rowId}`;
+            : endpoint?.url ?? `${this.config.baseUrl}/rows/${String(rowId)}`;
 
         const method = endpoint?.method ?? 'PATCH';
 
@@ -613,7 +659,7 @@ export class RestPlugin extends BasePlugin {
 
         return endpoint?.transformResponse
             ? endpoint.transformResponse(response)
-            : response;
+            : (response as TData | undefined);
     }
 
     // ========================================================================
@@ -715,7 +761,7 @@ export class RestPlugin extends BasePlugin {
     /**
      * Get column key from cell ID format "colIndex-rowString-uuid"
      */
-    private getColumnKeyFromCellId(cellId: CellId): string | null {
+    private getColumnKeyFromCellId(cellId: CellId): DataKey<TData> | null {
         // Parse column index from cell ID
         const parts = cellId.split('-');
         if (parts.length < 3) return null;
@@ -730,8 +776,8 @@ export class RestPlugin extends BasePlugin {
         }
 
         const columnKey = this.config.columns[colIndex].key;
-        this.log(`🌐 RestPlugin: Mapped cell ${cellId} to column key: ${columnKey}`);
-        return columnKey;
+        this.log(`🌐 RestPlugin: Mapped cell ${cellId} to column key: ${String(columnKey)}`);
+        return columnKey as DataKey<TData>;
     }
 
     /**

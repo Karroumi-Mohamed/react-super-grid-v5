@@ -21,6 +21,11 @@ export interface JournalEntry {
     updatedAt: string;
 }
 
+export type JournalEntryResponse = Omit<JournalEntry, 'debit' | 'credit'> & {
+    debit: number | null;
+    credit: number | null;
+};
+
 export interface Account {
     code: string;
     name: string;
@@ -63,3 +68,5 @@ export interface ApiErrorResponse {
 export interface BulkCreateRequest {
     rows: CreateJournalEntryDto[];
 }
+
+export type { JournalEntryResponse as JournalEntryDto };
