@@ -63,7 +63,7 @@ export const TextCell: CellComponent<string, TextCellConfig> = ({
 
                 case 'updateValue':
                     if (command.payload?.value !== undefined) {
-                        setInternalValue(String(command.payload.value));
+                        setInternalValue(command.payload.value);
                     }
                     break;
 

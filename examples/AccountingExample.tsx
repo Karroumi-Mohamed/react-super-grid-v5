@@ -142,23 +142,23 @@ export function AccountingExample() {
     const gridRef = useRef<SuperGridRef>(null);
 
     // Plugins (commented out - enable as needed)
-    const focusPlugin = useRef(new FocusPlugin()).current;
-    const editPlugin = useRef(new EditPlugin()).current;
-    const selectPlugin = useRef(new SelectPlugin()).current;
-    const multiEditPlugin = useRef(new MultiEditPlugin()).current;
-    const draftPlugin = useRef(new DraftPlugin()).current;
-    const restPlugin = useRef(new RestPlugin<JournalEntry>(restConfig)).current;
+    // const focusPlugin = useRef(new FocusPlugin()).current;
+    // const editPlugin = useRef(new EditPlugin()).current;
+    // const selectPlugin = useRef(new SelectPlugin()).current;
+    // const multiEditPlugin = useRef(new MultiEditPlugin()).current;
+    // const draftPlugin = useRef(new DraftPlugin()).current;
+    // const restPlugin = useRef(new RestPlugin<JournalEntry>(restConfig)).current;
 
 
 
-    const plugins = [
-        focusPlugin, // this allows focusing feature + keybaord navigation
-        editPlugin,
-        selectPlugin,
-        multiEditPlugin,
-        draftPlugin,
-        restPlugin
-    ]; // this array of plugins passed to the Table Library
+    // const plugins = [
+    //     focusPlugin, // this allows focusing feature + keybaord navigation
+    //     editPlugin,
+    //     selectPlugin,
+    //     multiEditPlugin,
+    //     draftPlugin,
+    //     restPlugin
+    // ]; // this array of plugins passed to the Table Library
 
 
     // ========================================================================
@@ -312,11 +312,28 @@ export function AccountingExample() {
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-[1600px] mx-auto">
-                {/* Grid */}
+                {/* Grid Container*/}
                 <div className="bg-white rounded-lg shadow-lg p-6">
 
+                    {/* Library */}
                     <SuperGrid ref={gridRef} data={journalEntries} config={columns}
-                        plugins={plugins}
+                        plugins={[
+                            // HI, this is an example of how we could use the library
+                            // if no features were provided for the table, it will act as basic data grid / table
+                            // want focusing functionality?
+                            new FocusPlugin(), // it also implements keybaord navigation
+                            // want editing?
+                            new EditPlugin(),
+                            //selection?
+                            new SelectPlugin(),
+                            // what about mergin both editing and selection?
+                            new MultiEditPlugin(),
+                            // need to add new records without forms? and withing the  grid?
+                            new DraftPlugin(), // injects UI
+                            // now we need to save our updated data into a database, we need to send them to server
+                            new RestPlugin(restConfig), // plugins can have thier own config, making them more flexible
+                            // thanks for watching
+                        ]}
                     />
                 </div>
             </div>
