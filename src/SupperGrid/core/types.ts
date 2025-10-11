@@ -31,12 +31,18 @@ type Cell = {
 type ButtonVariant = 'normal' | 'disabled' | 'standout';
 type ButtonPosition = 'left' | 'right';
 
+type WindowConfig = {
+    component: React.ComponentType<any>;
+    title: string;
+};
+
 type ToolbarButton = {
     id: ButtonId;
     label: string;
     callback: () => void;
     position: ButtonPosition;
     variant: ButtonVariant;
+    window?: WindowConfig;
 };
 
 interface RegistryI<T_ID, T_Obj> {
@@ -72,6 +78,7 @@ export type {
     ButtonVariant,
     ButtonPosition,
     ToolbarButton,
+    WindowConfig,
 };
 
 // APIs and Commands

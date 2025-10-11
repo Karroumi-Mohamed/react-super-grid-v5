@@ -1,4 +1,4 @@
-import type { ButtonId, ButtonVariant, ButtonPosition, ToolbarButton } from './types';
+import type { ButtonId, ButtonVariant, ButtonPosition, ToolbarButton, WindowConfig } from './types';
 
 /**
  * ToolbarRegistry
@@ -18,7 +18,8 @@ export class ToolbarRegistry {
         label: string,
         callback: () => void,
         position: ButtonPosition = 'left',
-        variant: ButtonVariant = 'normal'
+        variant: ButtonVariant = 'normal',
+        windowConfig?: WindowConfig
     ): ButtonId {
         // Generate unique button ID
         const id = `btn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -28,7 +29,8 @@ export class ToolbarRegistry {
             label,
             callback,
             position,
-            variant
+            variant,
+            window: windowConfig
         };
 
         this.buttons.set(id, button);

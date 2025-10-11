@@ -22,6 +22,7 @@ import { SelectPlugin } from '../src/SupperGrid/plugins/SelectionPlugin';
 import { MultiEditPlugin } from '../src/SupperGrid/plugins/MultiEditPlugin';
 import { DraftPlugin } from '../src/SupperGrid/plugins/DraftPlugin';
 import { RestPlugin, type RestPluginConfig } from '../src/SupperGrid/plugins/RestPlugin';
+import { FilterPlugin } from '../src/SupperGrid/plugins/FilterPlugin.tsx';
 
 // ============================================================================
 // Types
@@ -332,6 +333,8 @@ export function AccountingExample() {
                             new DraftPlugin(), // injects UI
                             // now we need to save our updated data into a database, we need to send them to server
                             new RestPlugin(restConfig), // plugins can have thier own config, making them more flexible
+                            // want to add filter functionality with a popup window?
+                            new FilterPlugin(), // demonstrates window system - click the Filter button to see it
                             // thanks for watching
                         ]}
                     />

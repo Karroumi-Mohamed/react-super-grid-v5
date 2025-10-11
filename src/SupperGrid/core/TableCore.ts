@@ -14,6 +14,7 @@ import type {
     ButtonId,
     ButtonVariant,
     ButtonPosition,
+    WindowConfig,
 } from './types';
 import type { TablePluginAPIs, RowPluginAPIs, RowTableAPIs, VerticalComparison } from './BasePlugin';
 import { CellCommandRegistry, RowCommandRegistry, SpaceCommandRegistry } from './CommandRegistry';
@@ -45,6 +46,8 @@ export class TableCore {
     private pluginSpaceIds: Map<string, SpaceId> = new Map(); // Track plugin space IDs
     private keyboardOwnerRef: React.MutableRefObject<CellId | null> | null = null;
     private toolbarChangeCallback: (() => void) | null = null;
+    private windowChangeCallback: (() => void) | null = null;
+    private activeWindowId: ButtonId | null = null;
 
     constructor() {
         this.cellCommandRegistry = new CellCommandRegistry();
@@ -280,8 +283,8 @@ export class TableCore {
                 return this.getKeyboardOwner();
             },
 
-            addButton: (label: string, callback: () => void, position: ButtonPosition = 'left', variant: ButtonVariant = 'normal') => {
-                const buttonId = this.toolbarRegistry.register(label, callback, position, variant);
+            addButton: (label: string, callback: () => void, position: ButtonPosition = 'left', variant: ButtonVariant = 'normal', windowConfig?: WindowConfig) => {
+                const buttonId = this.toolbarRegistry.register(label, callback, position, variant, windowConfig);
                 // Notify toolbar to re-render
                 this.notifyToolbarChange();
                 return buttonId;
@@ -742,6 +745,40 @@ export class TableCore {
 
     getToolbarButtons() {
         return this.toolbarRegistry.getAllButtons();
+    }
+
+    // Window management
+    setWindowChangeCallback(callback: () => void): void {
+        this.windowChangeCallback = callback;
+    }
+
+    private notifyWindowChange(): void {
+        if (this.windowChangeCallback) {
+            this.windowChangeCallback();
+        }
+    }
+
+    toggleWindow(buttonId: ButtonId): void {
+        if (this.activeWindowId === buttonId) {
+            // Close if already open
+            this.activeWindowId = null;
+        } else {
+            // Open this window (closes others)
+            this.activeWindowId = buttonId;
+        }
+        this.notifyWindowChange();
+    }
+
+    closeWindow(): void {
+        this.activeWindowId = null;
+        this.notifyWindowChange();
+    }
+
+    getActiveWindow(): { buttonId: ButtonId; button: import('./types').ToolbarButton } | null {
+        if (!this.activeWindowId) return null;
+        const button = this.toolbarRegistry.getAllButtons().find(b => b.id === this.activeWindowId);
+        if (!button || !button.window) return null;
+        return { buttonId: this.activeWindowId, button };
     }
 
     // Row destruction with automatic cell cleanup

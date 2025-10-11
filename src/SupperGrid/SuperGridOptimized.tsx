@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX, useReducer, useMemo } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, type JSX, useMemo } from 'react';
 import type { TableProps, RowProps, RowId, CellId, CellCommand, Cell, CellCommandHandeler, RowCommandHandler, SpaceId } from './core/types';
 import { TableCore } from './core/TableCore';
 import type { BasePlugin } from './core/BasePlugin';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from './core/utils';
 import { SpaceOptimized } from './components/SpaceOptimized';
-import { Toolbar } from './components/Toolbar';
+import { ToolbarContainer } from './components/ToolbarContainer';
 import { createCellValueHookBuilder } from './hooks/useCellValue';
 
 interface SuperGridProps<TData> extends TableProps<TData> {
@@ -32,7 +32,6 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
     const [pluginsInitialized, setPluginsInitialized] = useState(false);
     const mountedRef = useRef(false);
     const cellRegistrationCallbackRef = useRef<(() => void) | null>(null);
-    const [, forceToolbarUpdate] = useReducer(x => x + 1, 0);
 
     // Expose TableCore methods through ref
     useImperativeHandle(ref, () => ({
@@ -67,9 +66,6 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
         if (!tableCoreRef.current) {
             tableCoreRef.current = new TableCore();
             tableCoreRef.current.setKeyboardOwnerRef(keyboardOwnerRef);
-            tableCoreRef.current.setToolbarChangeCallback(() => {
-                forceToolbarUpdate();
-            });
         }
 
         // Add all plugins first (don't initialize yet)
@@ -251,10 +247,10 @@ export const SuperGrid = forwardRef<SuperGridRef, SuperGridProps<any>>(function 
     };
 
     return (
-        <div className="w-full flex flex-col">
+        <div className="w-full flex flex-col relative">
             {/* Toolbar - Full width, no scroll */}
             {tableCoreRef.current && (
-                <Toolbar buttons={tableCoreRef.current.getToolbarButtons()} />
+                <ToolbarContainer tableCore={tableCoreRef.current} />
             )}
 
             {/* Scrollable grid container */}
